@@ -1,5 +1,8 @@
 package com.danielrothmann.bookstoreapp
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,7 +30,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*  // ← ВАЖНО: Добавьте этот импорт!
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +49,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.storage
+import java.io.ByteArrayOutputStream
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +75,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
     val fireStore = Firebase.firestore
+    val firebaseStorage = Firebase.storage.reference.child("images")
     val listBooks = remember { mutableStateListOf<Book>() }
     var isLoading by remember { mutableStateOf(true) }
 
@@ -154,15 +161,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
                     price = 9.99
                 )
 
-                // При добавлении книги, addSnapshotListener автоматически обновит список!
-                fireStore.collection("books")
-                    .add(newBook)
-                    .addOnSuccessListener {
-                        Log.d("Firestore", "Book added with ID: ${it.id}")
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Firestore", "Error adding book", e)
-                    }
+
             }
         ) {
             Text(text = "Добавить книгу")
@@ -263,4 +262,33 @@ fun BookCardPreview() {
             )
         )
     }
+}
+// Firebase Storage работает с сырыми данными (bytes), а не с объектами Bitmap. Поэтому нужно конвертировать:
+private fun bitmapToByteArray(context: Context): ByteArray {
+    // 1. Получаем Bitmap из ресурсов
+    val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.img_test)
+
+    // 2. Создаем поток для записи байтов
+    val baos = ByteArrayOutputStream()
+
+    // 3. Сжимаем Bitmap в PNG формате (без потерь)
+    //    и записываем в поток
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
+    //      ↑ формат   ↑ качество (0-100)  ↑ куда записывать
+
+    // 4. Преобразуем поток в массив байтов
+    return baos.toByteArray()
+}
+
+private fun saveBook (fireStore: FirebaseFirestore, url: String){
+    // При добавлении книги, addSnapshotListener автоматически обновит список!
+    fireStore.collection("books")
+        .add(fireStore)
+        .addOnSuccessListener {
+            Log.d("Firestore", "Book added with ID: ${it.id}")
+        }
+        .addOnFailureListener { e ->
+            Log.e("Firestore", "Error adding book", e)
+        }
+
 }
