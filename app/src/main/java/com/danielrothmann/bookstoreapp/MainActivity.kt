@@ -291,31 +291,6 @@ fun BookCard(book: Book) {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun MainScreenPreview() {
-    BookStoreAppTheme {
-        MainScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BookCardPreview() {
-    BookStoreAppTheme {
-        BookCard(
-            book = Book(
-                title = "Война и мир",
-                author = "Лев Толстой",
-                description = "Роман-эпопея, описывающий русское общество в эпоху войн против Наполеона",
-                category = "Классика",
-                imageUrl = "",
-                price = 24.99
-            )
-        )
-    }
-}
 // Firebase Storage работает с сырыми данными (bytes), а не с объектами Bitmap. Поэтому нужно конвертировать:
 private fun bitmapToByteArray(context: Context): ByteArray {
     // 1. Получаем Bitmap из ресурсов
