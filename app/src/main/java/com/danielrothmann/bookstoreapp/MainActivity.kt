@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,30 +27,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.danielrothmann.bookstoreapp.data.Book
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
 import java.io.ByteArrayOutputStream
+import java.util.Date
+import java.util.UUID
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,10 +80,12 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val fireStore = Firebase.firestore
-    val firebaseStorage = Firebase.storage.reference.child("images")
+    val firebaseStorage = Firebase.storage.reference // Используем корень Storage
     val listBooks = remember { mutableStateListOf<Book>() }
     var isLoading by remember { mutableStateOf(true) }
+    var isUploading by remember { mutableStateOf(false) }
 
     // Используем DisposableEffect для управления слушателем
     DisposableEffect(Unit) {
@@ -100,7 +108,6 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 }
             }
 
-        // onDispose вызывается при уничтожении композабла
         onDispose {
             listener.remove()
             Log.d("Firestore", "Listener removed")
@@ -151,23 +158,55 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
+            enabled = !isUploading,
             onClick = {
-                val newBook = Book(
-                    title = "Новая книга ${System.currentTimeMillis()}",
-                    author = "Автор",
-                    description = "Описание книги",
-                    category = "Художественная литература",
-                    imageUrl = "",
-                    price = 9.99
-                )
+                isUploading = true
 
+                // Генерируем уникальное имя файла
+                val fileName = "book_${UUID.randomUUID()}.png"
 
+                // Загружаем в images/[имя_файла]
+                val imageRef = firebaseStorage.child("images/$fileName")
+
+                imageRef.putBytes(bitmapToByteArray(context))
+                    .addOnSuccessListener { uploadTask ->
+                        uploadTask.metadata?.reference?.downloadUrl?.addOnSuccessListener { url ->
+                            Log.d("FirebaseStorage", "Image URL: $url")
+                            saveBook(
+                                fireStore = fireStore,
+                                imageUrl = url.toString()
+                            ) { success ->
+                                isUploading = false
+                                if (!success) {
+                                    Log.e("FirebaseStorage", "Failed to save book info")
+                                }
+                            }
+                        }?.addOnFailureListener { e ->
+                            isUploading = false
+                            Log.e("FirebaseStorage", "Failed to get download URL", e)
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        isUploading = false
+                        Log.e("FirebaseStorage", "Error uploading image", e)
+                    }
             }
         ) {
-            Text(text = "Добавить книгу")
+            if (isUploading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Загрузка...")
+            } else {
+                Text(text = "Добавить книгу")
+            }
         }
     }
 }
+
 
 @Composable
 fun BookCard(book: Book) {
@@ -189,14 +228,24 @@ fun BookCard(book: Book) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Изображение книги
-            Image(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Book cover"
-            )
+            // Изображение книги (используем загрузку из URL если есть)
+            if (book.imageUrl.isNotEmpty()) {
+                Image(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    painter = rememberAsyncImagePainter(model = book.imageUrl),
+                    contentDescription = "Book cover"
+                )
+            } else {
+                Image(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Book cover"
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -239,6 +288,7 @@ fun BookCard(book: Book) {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
@@ -280,15 +330,29 @@ private fun bitmapToByteArray(context: Context): ByteArray {
     return baos.toByteArray()
 }
 
-private fun saveBook (fireStore: FirebaseFirestore, url: String){
-    // При добавлении книги, addSnapshotListener автоматически обновит список!
+private fun saveBook(
+    fireStore: FirebaseFirestore,
+    imageUrl: String,
+    onComplete: (Boolean) -> Unit
+) {
+    // Создаем объект книги
+    val book = Book(
+        title = "Новая книга ${Date().time}",
+        author = "Автор",
+        description = "Описание книги",
+        category = "Художественная литература",
+        imageUrl = imageUrl,
+        price = 19.99
+    )
+
     fireStore.collection("books")
-        .add(fireStore)
+        .add(book)
         .addOnSuccessListener {
             Log.d("Firestore", "Book added with ID: ${it.id}")
+            onComplete(true)
         }
         .addOnFailureListener { e ->
             Log.e("Firestore", "Error adding book", e)
+            onComplete(false)
         }
-
 }
