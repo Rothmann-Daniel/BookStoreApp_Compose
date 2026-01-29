@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.danielrothmann.bookstoreapp.data.Book
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
@@ -228,14 +229,16 @@ fun BookCard(book: Book) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Изображение книги (используем загрузку из URL если есть)
+            // Используем AsyncImage для загрузки изображений из URL
             if (book.imageUrl.isNotEmpty()) {
-                Image(
+                AsyncImage(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(8.dp)),
-                    painter = rememberAsyncImagePainter(model = book.imageUrl),
-                    contentDescription = "Book cover"
+                    model = book.imageUrl,
+                    contentDescription = "Book cover",
+                    placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                    error = painterResource(id = R.drawable.ic_launcher_foreground)
                 )
             } else {
                 Image(
