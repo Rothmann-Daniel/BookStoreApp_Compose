@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import com.danielrothmann.bookstoreapp.auth.LoginScreen
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
 
 
@@ -17,17 +18,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-//            BookStoreAppTheme {
-//                Scaffold(
-//                    //   modifier = Modifier.fillMaxSize()
-//               ) { innerPadding ->
-//                  MainScreen(
-//                        modifier = Modifier.padding(innerPadding)
-//                   )
-//            }
+            BookStoreAppTheme {
+                Scaffold(
+                    //   modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+                    LoginScreen(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
         }
     }
 }
-
 
 
