@@ -1,6 +1,5 @@
 package com.danielrothmann.bookstoreapp.auth
 
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
