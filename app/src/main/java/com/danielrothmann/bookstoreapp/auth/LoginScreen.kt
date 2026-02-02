@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.danielrothmann.bookstoreapp.ui.theme.buttonIsenabled
 import com.google.firebase.Firebase
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -40,7 +41,7 @@ fun LoginScreen(modifier: Modifier) {
     val emailState = remember { mutableStateOf("") }
     val passwordState = remember { mutableStateOf("") }
 
-    Log.d("auth", "LoginScreen: ${auth.currentUser?.uid}")
+    Log.d("auth", "LoginScreen: ${auth.currentUser?.email} UID: ${auth.currentUser?.uid}")
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -59,7 +60,10 @@ fun LoginScreen(modifier: Modifier) {
             label = { Text("Password") }
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
+
+        AuthButton(
+            text = "Sign In",
+            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
             onClick = {
                 signInWithEmailAndPassword(
                     auth,
@@ -67,22 +71,14 @@ fun LoginScreen(modifier: Modifier) {
                     password = passwordState.value,
                     context = context
                 )
-            },
-            modifier = Modifier.padding(8.dp),
-            shape = RoundedCornerShape(10.dp),
-            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = buttonIsenabled, // Основной цвет кнопки
-                contentColor = Color.White,  // Цвет текста/иконок
-                disabledContainerColor = Color.Gray, // Цвет когда disabled
-                disabledContentColor = Color.LightGray
-            )
-        ) {
-            Text("Sign In")
-        }
+            }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
-        Button(
+
+        AuthButton(
+            text = "Sign Up",
+            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
             onClick = {
                 singUpWithEmailAndPassword(
                     auth,
@@ -90,21 +86,58 @@ fun LoginScreen(modifier: Modifier) {
                     password = passwordState.value,
                     context = context
                 )
-            },
-            modifier = Modifier.padding(8.dp),
-            shape = RoundedCornerShape(10.dp),
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        AuthButton(
+            text = "Sign Out",
             enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = buttonIsenabled, // Основной цвет кнопки
-                contentColor = Color.White,  // Цвет текста/иконок
-                disabledContainerColor = Color.Gray, // Цвет когда disabled
-                disabledContentColor = Color.LightGray
-            )
-        ) {
-            Text("Sign Up")
-        }
+            onClick = {
+                singOut(auth)
+                Log.d("auth", "LoginScreen: ${auth.currentUser?.email} Sing Out")
+                emailState.value = ""
+                passwordState.value = ""
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        AuthButton(
+            text = "Delete Acc",
+            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
+            onClick = {
+                Log.d("auth", "LoginScreen: ${auth.currentUser?.email} DELETE")
+                deleteAccount(auth, emailState.value, passwordState.value)
+            }
+        )
 
 
+    }
+}
+
+
+@Composable
+fun AuthButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.padding(8.dp),
+        shape = RoundedCornerShape(10.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = buttonIsenabled,  // Основной цвет кнопки
+            contentColor = Color.White,  // Цвет текста/иконок
+            disabledContainerColor = Color.Gray,  // Цвет когда disabled
+            disabledContentColor = Color.LightGray
+        )
+    ) {
+        Text(text)
     }
 }
 
@@ -159,7 +192,12 @@ private fun singUpWithEmailAndPassword(
 }
 
 
-private fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, password: String, context: Context) {
+private fun signInWithEmailAndPassword(
+    auth: FirebaseAuth,
+    email: String,
+    password: String,
+    context: Context
+) {
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -170,4 +208,36 @@ private fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, passwo
 
             }
         }
+}
+
+
+private fun deleteAccount(
+    auth: FirebaseAuth,
+    email: String,
+    password: String
+) {
+    val credential = EmailAuthProvider.getCredential(email, password)
+    auth.currentUser?.reauthenticate(credential)?.addOnCompleteListener { reauthTask ->
+        if (reauthTask.isSuccessful) {
+            auth.currentUser?.delete()?.addOnCompleteListener { deleteTask ->
+                if (deleteTask.isSuccessful) {
+                    Log.d("auth", "User account deleted.")
+                } else {
+                    Log.w("auth", "User account deletion failed", deleteTask.exception)
+                }
+            }
+        }else{
+            Log.w("auth", "User reauthentication failed", reauthTask.exception)
+        }
+    }
+}
+
+private fun singOut(auth: FirebaseAuth) {
+    auth.signOut()
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    LoginScreen(modifier = Modifier)
 }
