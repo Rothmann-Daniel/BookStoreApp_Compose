@@ -40,6 +40,8 @@ fun LoginScreen(modifier: Modifier) {
     val emailState = remember { mutableStateOf("") }
     val passwordState = remember { mutableStateOf("") }
 
+    Log.d("auth", "LoginScreen: ${auth.currentUser?.uid}")
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -56,6 +58,29 @@ fun LoginScreen(modifier: Modifier) {
             onValueChange = { passwordState.value = it },
             label = { Text("Password") }
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = {
+                signInWithEmailAndPassword(
+                    auth,
+                    email = emailState.value,
+                    password = passwordState.value,
+                    context = context
+                )
+            },
+            modifier = Modifier.padding(8.dp),
+            shape = RoundedCornerShape(10.dp),
+            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = buttonIsenabled, // Основной цвет кнопки
+                contentColor = Color.White,  // Цвет текста/иконок
+                disabledContainerColor = Color.Gray, // Цвет когда disabled
+                disabledContentColor = Color.LightGray
+            )
+        ) {
+            Text("Sign In")
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
@@ -92,7 +117,7 @@ private fun singUpWithEmailAndPassword(
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Log.d(TAG, "createUserWithEmail:success")
+                Log.d("auth", "createUserWithEmail:success")
                 val user = auth.currentUser
 
                 Toast.makeText(
@@ -105,12 +130,12 @@ private fun singUpWithEmailAndPassword(
                 user?.sendEmailVerification()
                     ?.addOnCompleteListener { verificationTask ->
                         if (verificationTask.isSuccessful) {
-                            Log.d(TAG, "Verification email sent.")
+                            Log.d("auth", "Verification email sent.")
                         }
                     }
                 // updateUI(user)
             } else {
-                Log.w(TAG, "createUserWithEmail:failure", task.exception)
+                Log.w("auth", "createUserWithEmail:failure", task.exception)
 
                 // Более информативные сообщения об ошибках
                 val errorMessage = when (task.exception) {
@@ -129,11 +154,20 @@ private fun singUpWithEmailAndPassword(
             }
         }
         .addOnFailureListener { exception ->
-            Log.e(TAG, "Registration failed: ", exception)
+            Log.e("auth", "Registration failed: ", exception)
         }
 }
 
 
-private fun signInWithEmailAndPassword(email: String, password: String) {
+private fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, password: String, context: Context) {
+    auth.signInWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("auth", "signInWithEmail:success")
+                val user = auth.currentUser
+            } else {
+                Log.w("auth", "signInWithEmail:failure", task.exception)
 
+            }
+        }
 }
