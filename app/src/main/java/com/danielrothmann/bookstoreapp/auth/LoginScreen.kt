@@ -3,27 +3,32 @@ package com.danielrothmann.bookstoreapp.auth
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.danielrothmann.bookstoreapp.ui.theme.buttonIsenabled
+import androidx.compose.ui.unit.sp
+import com.danielrothmann.bookstoreapp.R
 import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -35,110 +40,109 @@ import com.google.firebase.auth.auth
 @Composable
 fun LoginScreen(modifier: Modifier) {
     val context = LocalContext.current
-    // Initialize Firebase Auth
     val auth = Firebase.auth
     val emailState = remember { mutableStateOf("") }
     val passwordState = remember { mutableStateOf("") }
 
     Log.d("auth", "LoginScreen: ${auth.currentUser?.email} UID: ${auth.currentUser?.uid}")
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        TextField(
-            value = emailState.value,
-            onValueChange = { emailState.value = it },
-            label = { Text("Email") }
+        Image(
+            painter = painterResource(id = R.drawable.img_bg_mainscreen),
+            contentDescription = "background",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        TextField(
-            value = passwordState.value,
-            onValueChange = { passwordState.value = it },
-            label = { Text("Password") }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
 
-        AuthButton(
-            text = "Sign In",
-            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            onClick = {
-                signInWithEmailAndPassword(
-                    auth,
-                    email = emailState.value,
-                    password = passwordState.value,
-                    context = context
-                )
+        // Основной контент по центру
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Приветствие
+            Text(
+                text = "Welcome to Our BookStore...",
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontFamily = FontFamily.Cursive
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 32.dp, top = 64.dp).fillMaxWidth()
+            )
+
+            // Поля ввода
+            RoundedCornerTextField(
+                value = emailState.value,
+                label = "Email"
+            ) {
+                emailState.value = it
             }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        AuthButton(
-            text = "Sign Up",
-            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            onClick = {
-                singUpWithEmailAndPassword(
-                    auth,
-                    email = emailState.value,
-                    password = passwordState.value,
-                    context = context
-                )
+            Spacer(modifier = Modifier.height(16.dp))
+            RoundedCornerTextField(
+                value = passwordState.value,
+                label = "Password"
+            ) {
+                passwordState.value = it
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Кнопки
+            AuthButton(
+                text = "Sign In",
+                enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
+                onClick = {
+                    signInWithEmailAndPassword(
+                        auth,
+                        email = emailState.value,
+                        password = passwordState.value,
+                        context = context
+                    )
+                    Log.d("auth", "Sing In Successful: ${auth.currentUser?.email} ")
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            AuthButton(
+                text = "Sign Up",
+                enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
+                onClick = {
+                    singUpWithEmailAndPassword(
+                        auth,
+                        email = emailState.value,
+                        password = passwordState.value,
+                        context = context
+                    )
+                    Log.d("auth", "Sing Up Successful: ${auth.currentUser?.email} ")
+                }
+            )
+        }
+
+        // Подпись
+        Text(
+            text = "Design by Daniel Rothmann",
+            style = TextStyle(
+                color = Color.White,
+                fontSize = 22.sp,
+                fontFamily = FontFamily.Cursive
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.BottomCenter) // Прижимает к низу
+                .padding(bottom = 32.dp) // Отступ от самого низа
+                .fillMaxWidth()
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        AuthButton(
-            text = "Sign Out",
-            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            onClick = {
-                singOut(auth)
-                Log.d("auth", "LoginScreen: ${auth.currentUser?.email} Sing Out")
-                emailState.value = ""
-                passwordState.value = ""
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        AuthButton(
-            text = "Delete Acc",
-            enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
-            onClick = {
-                Log.d("auth", "LoginScreen: ${auth.currentUser?.email} DELETE")
-                deleteAccount(auth, emailState.value, passwordState.value)
-            }
-        )
-
-
     }
 }
 
-
-@Composable
-fun AuthButton(
-    text: String,
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.padding(8.dp),
-        shape = RoundedCornerShape(10.dp),
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = buttonIsenabled,  // Основной цвет кнопки
-            contentColor = Color.White,  // Цвет текста/иконок
-            disabledContainerColor = Color.Gray,  // Цвет когда disabled
-            disabledContentColor = Color.LightGray
-        )
-    ) {
-        Text(text)
-    }
-}
 
 private fun singUpWithEmailAndPassword(
     auth: FirebaseAuth,
@@ -225,7 +229,7 @@ private fun deleteAccount(
                     Log.w("auth", "User account deletion failed", deleteTask.exception)
                 }
             }
-        }else{
+        } else {
             Log.w("auth", "User reauthentication failed", reauthTask.exception)
         }
     }
