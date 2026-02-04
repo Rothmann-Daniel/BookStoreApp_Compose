@@ -7,29 +7,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.danielrothmann.bookstoreapp.auth.LoginScreen
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val fireStore = Firebase.firestore
-        val books = fireStore
-            .collection("books")
-            .document().set("name" to "My first test Book")
-
         enableEdgeToEdge()
+
         setContent {
             BookStoreAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                Scaffold(
+                    //   modifier = Modifier.fillMaxSize()
+                ) { innerPadding ->
+                    LoginScreen(
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -38,18 +31,4 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BookStoreAppTheme {
-        Greeting("Android")
-    }
-}
