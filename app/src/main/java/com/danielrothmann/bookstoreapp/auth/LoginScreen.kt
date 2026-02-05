@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -105,7 +104,7 @@ fun LoginScreen(modifier: Modifier) {
                         password = passwordState.value,
                         context = context
                     )
-                    Log.d("auth", "Sing In Successful: ${auth.currentUser?.email} ")
+                    Log.d("auth", "Sign In Successful: ${auth.currentUser?.email} ")
                 }
             )
 
@@ -115,13 +114,13 @@ fun LoginScreen(modifier: Modifier) {
                 text = "Sign Up",
                 enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
                 onClick = {
-                    singUpWithEmailAndPassword(
+                    signUpWithEmailAndPassword(
                         auth,
                         email = emailState.value,
                         password = passwordState.value,
                         context = context
                     )
-                    Log.d("auth", "Sing Up Successful: ${auth.currentUser?.email} ")
+                    Log.d("auth", "Sign Up Successful: ${auth.currentUser?.email} ")
                 }
             )
         }
@@ -144,7 +143,7 @@ fun LoginScreen(modifier: Modifier) {
 }
 
 
-private fun singUpWithEmailAndPassword(
+private fun signUpWithEmailAndPassword(
     auth: FirebaseAuth,
     email: String,
     password: String,
@@ -235,9 +234,10 @@ private fun deleteAccount(
     }
 }
 
-private fun singOut(auth: FirebaseAuth) {
+private fun signOut(auth: FirebaseAuth) {
     auth.signOut()
 }
+
 
 @Preview(showBackground = true)
 @Composable
