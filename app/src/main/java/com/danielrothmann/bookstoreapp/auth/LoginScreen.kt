@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -65,20 +66,22 @@ fun LoginScreen(modifier: Modifier) {
         ) {
             // Приветствие
             Text(
-                text = "Welcome to Our BookStore...",
+                text = stringResource(R.string.greeting_welcome),
                 style = TextStyle(
                     color = Color.White,
                     fontSize = 32.sp,
                     fontFamily = FontFamily.Cursive
                 ),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 32.dp, top = 64.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(bottom = 32.dp, top = 64.dp)
+                    .fillMaxWidth()
             )
 
             // Поля ввода
             RoundedCornerTextField(
                 value = emailState.value,
-                label = "Email"
+                label = stringResource(R.string.email)
             ) {
                 emailState.value = it
             }
@@ -86,7 +89,7 @@ fun LoginScreen(modifier: Modifier) {
             Spacer(modifier = Modifier.height(16.dp))
             RoundedCornerTextField(
                 value = passwordState.value,
-                label = "Password"
+                label = stringResource(R.string.password)
             ) {
                 passwordState.value = it
             }
@@ -95,7 +98,7 @@ fun LoginScreen(modifier: Modifier) {
 
             // Кнопки
             AuthButton(
-                text = "Sign In",
+                text = stringResource(R.string.sign_in),
                 enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
                 onClick = {
                     signInWithEmailAndPassword(
@@ -111,7 +114,7 @@ fun LoginScreen(modifier: Modifier) {
             Spacer(modifier = Modifier.height(4.dp))
 
             AuthButton(
-                text = "Sign Up",
+                text = stringResource(R.string.sign_up),
                 enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
                 onClick = {
                     signUpWithEmailAndPassword(
@@ -127,7 +130,7 @@ fun LoginScreen(modifier: Modifier) {
 
         // Подпись
         Text(
-            text = "Design by Daniel Rothmann",
+            text = stringResource(R.string.design_by),
             style = TextStyle(
                 color = Color.White,
                 fontSize = 22.sp,
