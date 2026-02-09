@@ -33,7 +33,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
 @Composable
-fun LoginScreen(modifier: Modifier) {
+fun LoginScreen(
+    modifier: Modifier,
+    onLoginSuccess: () -> Unit = {}
+) {
     val context = LocalContext.current
     val auth = Firebase.auth
     val emailState = remember { mutableStateOf("") }
@@ -98,6 +101,7 @@ fun LoginScreen(modifier: Modifier) {
                         onSuccess = { user ->
                             Log.d("auth", "Sign In Successful: ${user?.email}")
                             // Навигация на главный экран
+                            onLoginSuccess() // Навигация
                         },
                         onFailure = { error ->
                             Log.e("auth", "Sign In Failed: $error")
@@ -119,6 +123,7 @@ fun LoginScreen(modifier: Modifier) {
                         context = context,
                         onSuccess = { user ->
                             Log.d("auth", "Sign Up Successful: ${user?.email}")
+                            onLoginSuccess() // Навигация
                         },
                         onFailure = { error ->
                             Log.e("auth", "Sign Up Failed: $error")

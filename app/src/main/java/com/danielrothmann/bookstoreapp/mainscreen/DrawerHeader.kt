@@ -34,7 +34,8 @@ fun DrawerHeader(){
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp)
-            .background(color = backgroundDrawer),
+            .background(color = backgroundDrawer)
+        .padding(top = 0.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {

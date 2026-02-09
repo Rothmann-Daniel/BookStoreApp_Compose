@@ -1,23 +1,23 @@
 package com.danielrothmann.bookstoreapp.mainscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,61 +28,98 @@ import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.auth.signOutWithToast
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
+import com.danielrothmann.bookstoreapp.auth.deleteAccountWithReauth
+import com.danielrothmann.bookstoreapp.ui.theme.backgroundDrawer
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(modifier: Modifier) {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    onSignOut: () -> Unit = {}
+) {
     val drawerState = rememberDrawerState(DrawerValue.Open)
     val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+    val scope = rememberCoroutineScope()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        modifier = Modifier.fillMaxWidth(0.7f),
         drawerContent = {
-            Column(
-                modifier = Modifier.fillMaxSize()
+            ModalDrawerSheet(
+                modifier = Modifier.fillMaxWidth(0.7f),
+                drawerContainerColor = Color.Transparent, // Убираем белый фон
+                drawerContentColor = Color.White,
+                windowInsets = WindowInsets(0, 0, 0, 0) // Убирает системные отступы
             ) {
-                DrawerHeader()
-                DrawerBody(
-                    modifier = Modifier.weight(1f) // Занимает все доступное пространство
-                )
-                SignOutButton(
-                    modifier = Modifier.padding(16.dp) // Добавляем отступы для кнопки
+                Column(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    FirebaseAuth.getInstance().signOutWithToast(context) {
-                        // Здесь можно добавить навигацию на экран логина
-                    }
+                    DrawerHeader()
+                    DrawerBody(
+                        modifier = Modifier.weight(1f),
+                        onSignOut = {
+                            auth.signOutWithToast(context) {
+                                onSignOut()
+                            }
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        },
+                        onDeleteAccount = {
+                            // Здесь можно добавить диалог подтверждения
+                            // на удаление аккаунта
+
+                        }
+                    )
                 }
             }
         }
     ) {
         // Контент главного экрана
-    }
-}
-
-// Кнопка выхода внизу
-@Composable
-fun SignOutButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-            contentDescription = "Sign out",
-            tint = Color.Red.copy(alpha = 0.9f),
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = "Sign Out",
-            fontSize = 18.sp,
-            color = Color.Red.copy(alpha = 0.9f),
-            fontWeight = FontWeight.Medium
-        )
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Book Store") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            scope.launch {
+                                drawerState.open()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Welcome to Book Store!",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "User: ${auth.currentUser?.email ?: "Unknown"}",
+                    fontSize = 16.sp
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = "Main content will be here",
+                    fontSize = 18.sp,
+                    color = Color.Gray
+                )
+            }
+        }
     }
 }

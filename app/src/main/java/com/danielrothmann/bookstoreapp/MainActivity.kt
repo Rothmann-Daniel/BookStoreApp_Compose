@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.danielrothmann.bookstoreapp.auth.LoginScreen
-import com.danielrothmann.bookstoreapp.mainscreen.MainScreen
+import androidx.navigation.compose.rememberNavController
+import com.danielrothmann.bookstoreapp.navigation.NavGraph
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
 
 
@@ -20,10 +20,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BookStoreAppTheme {
+                val navController = rememberNavController()
                 Scaffold(
-
+                    modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    MainScreen(
+                    NavGraph(
+                        navController = navController,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -31,5 +33,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-

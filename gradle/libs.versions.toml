@@ -12,9 +12,11 @@ activityCompose = "1.9.3"
 composeBom = "2024.09.00"
 gmsVersion = "4.4.2"  # Стабильная версия Google Services
 firebaseCommonKtx = "21.0.0"
+navigationCompose = "2.7.6"
 
 [libraries]
 # Firebase dependencies
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics-ktx" }
