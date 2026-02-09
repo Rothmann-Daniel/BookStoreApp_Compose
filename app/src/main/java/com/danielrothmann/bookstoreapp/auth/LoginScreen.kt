@@ -30,11 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
 import com.google.firebase.Firebase
-import com.google.firebase.auth.EmailAuthProvider
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.auth
 
 @Composable
@@ -43,8 +38,6 @@ fun LoginScreen(modifier: Modifier) {
     val auth = Firebase.auth
     val emailState = remember { mutableStateOf("") }
     val passwordState = remember { mutableStateOf("") }
-
-    Log.d("auth", "LoginScreen: ${auth.currentUser?.email} UID: ${auth.currentUser?.uid}")
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -56,7 +49,6 @@ fun LoginScreen(modifier: Modifier) {
             contentScale = ContentScale.Crop
         )
 
-        // Основной контент по центру
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -64,7 +56,6 @@ fun LoginScreen(modifier: Modifier) {
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Приветствие
             Text(
                 text = stringResource(R.string.greeting_welcome),
                 style = TextStyle(
@@ -78,7 +69,6 @@ fun LoginScreen(modifier: Modifier) {
                     .fillMaxWidth()
             )
 
-            // Поля ввода
             RoundedCornerTextField(
                 value = emailState.value,
                 label = stringResource(R.string.email)
@@ -96,18 +86,23 @@ fun LoginScreen(modifier: Modifier) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Кнопки
             AuthButton(
                 text = stringResource(R.string.sign_in),
                 enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
                 onClick = {
-                    signInWithEmailAndPassword(
-                        auth,
+                    // Используем extension функцию
+                    auth.signInWithEmail(
                         email = emailState.value,
                         password = passwordState.value,
-                        context = context
+                        context = context,
+                        onSuccess = { user ->
+                            Log.d("auth", "Sign In Successful: ${user?.email}")
+                            // Навигация на главный экран
+                        },
+                        onFailure = { error ->
+                            Log.e("auth", "Sign In Failed: $error")
+                        }
                     )
-                    Log.d("auth", "Sign In Successful: ${auth.currentUser?.email} ")
                 }
             )
 
@@ -117,18 +112,22 @@ fun LoginScreen(modifier: Modifier) {
                 text = stringResource(R.string.sign_up),
                 enabled = emailState.value.isNotBlank() && passwordState.value.isNotBlank(),
                 onClick = {
-                    signUpWithEmailAndPassword(
-                        auth,
+                    // Используем extension функцию
+                    auth.signUpWithEmail(
                         email = emailState.value,
                         password = passwordState.value,
-                        context = context
+                        context = context,
+                        onSuccess = { user ->
+                            Log.d("auth", "Sign Up Successful: ${user?.email}")
+                        },
+                        onFailure = { error ->
+                            Log.e("auth", "Sign Up Failed: $error")
+                        }
                     )
-                    Log.d("auth", "Sign Up Successful: ${auth.currentUser?.email} ")
                 }
             )
         }
 
-        // Подпись
         Text(
             text = stringResource(R.string.design_by),
             style = TextStyle(
@@ -138,107 +137,11 @@ fun LoginScreen(modifier: Modifier) {
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .align(Alignment.BottomCenter) // Прижимает к низу
-                .padding(bottom = 32.dp) // Отступ от самого низа
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
                 .fillMaxWidth()
         )
     }
-}
-
-
-private fun signUpWithEmailAndPassword(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    context: Context
-) {
-    auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d("auth", "createUserWithEmail:success")
-                val user = auth.currentUser
-
-                Toast.makeText(
-                    context,
-                    "Регистрация успешна!",
-                    Toast.LENGTH_SHORT,
-                ).show()
-
-                // Дополнительные действия после успешной регистрации
-                user?.sendEmailVerification()
-                    ?.addOnCompleteListener { verificationTask ->
-                        if (verificationTask.isSuccessful) {
-                            Log.d("auth", "Verification email sent.")
-                        }
-                    }
-                // updateUI(user)
-            } else {
-                Log.w("auth", "createUserWithEmail:failure", task.exception)
-
-                // Более информативные сообщения об ошибках
-                val errorMessage = when (task.exception) {
-                    is FirebaseAuthWeakPasswordException -> "Слишком слабый пароль"
-                    is FirebaseAuthInvalidCredentialsException -> "Неверный формат email"
-                    is FirebaseAuthUserCollisionException -> "Пользователь уже существует"
-                    else -> "Ошибка регистрации: ${task.exception?.message}"
-                }
-
-                Toast.makeText(
-                    context,
-                    errorMessage,
-                    Toast.LENGTH_LONG,
-                ).show()
-                // updateUI(null)
-            }
-        }
-        .addOnFailureListener { exception ->
-            Log.e("auth", "Registration failed: ", exception)
-        }
-}
-
-
-private fun signInWithEmailAndPassword(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    context: Context
-) {
-    auth.signInWithEmailAndPassword(email, password)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d("auth", "signInWithEmail:success")
-                val user = auth.currentUser
-            } else {
-                Log.w("auth", "signInWithEmail:failure", task.exception)
-
-            }
-        }
-}
-
-
-private fun deleteAccount(
-    auth: FirebaseAuth,
-    email: String,
-    password: String
-) {
-    val credential = EmailAuthProvider.getCredential(email, password)
-    auth.currentUser?.reauthenticate(credential)?.addOnCompleteListener { reauthTask ->
-        if (reauthTask.isSuccessful) {
-            auth.currentUser?.delete()?.addOnCompleteListener { deleteTask ->
-                if (deleteTask.isSuccessful) {
-                    Log.d("auth", "User account deleted.")
-                } else {
-                    Log.w("auth", "User account deletion failed", deleteTask.exception)
-                }
-            }
-        } else {
-            Log.w("auth", "User reauthentication failed", reauthTask.exception)
-        }
-    }
-}
-
-private fun signOut(auth: FirebaseAuth) {
-    auth.signOut()
 }
 
 

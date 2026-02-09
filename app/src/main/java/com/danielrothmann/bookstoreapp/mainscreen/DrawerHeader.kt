@@ -53,11 +53,12 @@ fun DrawerHeader(){
             text = stringResource(R.string.greeting_welcome),
             color = Color.Black,
             fontFamily = FontFamily.Cursive,
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             modifier = Modifier
                 .offset(y = (-16).dp) // Поднимаем текст вверх
         )
       }
+
 }
 
 
