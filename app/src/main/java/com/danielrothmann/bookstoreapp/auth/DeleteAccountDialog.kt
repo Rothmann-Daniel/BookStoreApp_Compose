@@ -64,6 +64,7 @@ fun DeleteAccountDialog(
                 RoundedCornerTextField(
                     value = password,
                     label = "Password",
+                    isPassword = true,
                     onValueChange = { password = it }
                 )
 
@@ -88,7 +89,8 @@ fun DeleteAccountDialog(
                         enabled = email.isNotBlank() && password.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Red
-                        )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Удалить")
                     }

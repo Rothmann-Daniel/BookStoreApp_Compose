@@ -72,20 +72,24 @@ fun LoginScreen(
                     .fillMaxWidth()
             )
 
+            // все параметры явно указаны
             RoundedCornerTextField(
                 value = emailState.value,
-                label = stringResource(R.string.email)
-            ) {
-                emailState.value = it
-            }
+                label = stringResource(R.string.email),
+                onValueChange = { emailState.value = it },
+                isPassword = false
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // для пароля isPassword = true
             RoundedCornerTextField(
                 value = passwordState.value,
-                label = stringResource(R.string.password)
-            ) {
-                passwordState.value = it
-            }
+                label = stringResource(R.string.password),
+                onValueChange = { passwordState.value = it },
+                isPassword = true
+            )
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
