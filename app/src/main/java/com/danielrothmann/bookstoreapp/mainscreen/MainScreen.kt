@@ -1,5 +1,6 @@
 package com.danielrothmann.bookstoreapp.mainscreen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -48,7 +49,7 @@ fun MainScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
-    // Состояние для диалога удаления (Создаем состояние (по умолчанию false = диалог скрыт))
+    // Состояние для диалога удаления (Создаем состояние по умолчанию false = диалог скрыт)
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
@@ -77,6 +78,14 @@ fun MainScreen(
                         onDeleteAccount = {
                             // диалог подтверждения на удаление аккаунта
                             showDeleteDialog = true // При клике на "Delete Account" меняем состояние на true
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        },
+                        onCategoryClick = { category ->
+                            // Обработка клика по категории
+                            Toast.makeText(context, "Selected: $category", Toast.LENGTH_SHORT)
+                                .show()
                             scope.launch {
                                 drawerState.close()
                             }
@@ -133,7 +142,7 @@ fun MainScreen(
         }
     }
     // Диалог удаления аккаунта
-    if (showDeleteDialog) { //Когда showDeleteDialog = true, диалог показывается
+    if (showDeleteDialog) { // Когда showDeleteDialog = true, диалог показывается
         DeleteAccountDialog(
             onDismiss = {
                 showDeleteDialog = false // При закрытии диалога меняем состояние на false
