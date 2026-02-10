@@ -101,7 +101,7 @@ fun LoginScreen(
                         onSuccess = { user ->
                             Log.d("auth", "Sign In Successful: ${user?.email}")
                             // Навигация на главный экран
-                            onLoginSuccess() // Навигация
+                            onLoginSuccess()
                         },
                         onFailure = { error ->
                             Log.e("auth", "Sign In Failed: $error")

@@ -1,35 +1,41 @@
 package com.danielrothmann.bookstoreapp.mainscreen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.danielrothmann.bookstoreapp.auth.DeleteAccountDialog
+import com.danielrothmann.bookstoreapp.auth.deleteAccountWithReauth
 import com.danielrothmann.bookstoreapp.auth.signOutWithToast
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.ui.platform.LocalContext
-import com.danielrothmann.bookstoreapp.auth.deleteAccountWithReauth
-import com.danielrothmann.bookstoreapp.ui.theme.backgroundDrawer
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,6 +48,8 @@ fun MainScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
+    // Состояние для диалога удаления (Создаем состояние (по умолчанию false = диалог скрыт))
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -67,8 +75,11 @@ fun MainScreen(
                             }
                         },
                         onDeleteAccount = {
-                            // Здесь можно добавить диалог подтверждения на удаление аккаунта
-
+                            // диалог подтверждения на удаление аккаунта
+                            showDeleteDialog = true // При клике на "Delete Account" меняем состояние на true
+                            scope.launch {
+                                drawerState.close()
+                            }
                         }
                     )
                 }
@@ -120,5 +131,28 @@ fun MainScreen(
                 )
             }
         }
+    }
+    // Диалог удаления аккаунта
+    if (showDeleteDialog) { //Когда showDeleteDialog = true, диалог показывается
+        DeleteAccountDialog(
+            onDismiss = {
+                showDeleteDialog = false // При закрытии диалога меняем состояние на false
+            },
+            onConfirm = { email, password ->
+                auth.deleteAccountWithReauth(
+                    email = email,
+                    password = password,
+                    context = context,
+                    onSuccess = { // При успешном удалении закрываем диалог
+                        showDeleteDialog = false
+                        onSignOut() // Возвращаемся на экран логина
+                    },
+                    onFailure = { error ->
+                        // Ошибка уже показана в Toast
+                        // Диалог остается открытым для повторной попытки
+                    }
+                )
+            }
+        )
     }
 }
