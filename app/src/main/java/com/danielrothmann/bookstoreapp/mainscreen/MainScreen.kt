@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.auth.DeleteAccountDialog
 import com.danielrothmann.bookstoreapp.auth.deleteAccountWithReauth
 import com.danielrothmann.bookstoreapp.auth.signOutWithToast
+import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -113,7 +114,11 @@ fun MainScreen(
                         }
                     }
                 )
+            },
+            bottomBar = {
+                BottomMenu()
             }
+
         ) { paddingValues ->
             Column(
                 modifier = Modifier
