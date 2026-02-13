@@ -13,27 +13,23 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.danielrothmann.bookstoreapp.R
 
 @Composable
-fun BottomMenu() {
+fun BottomMenu(
+    currentRoute: String,
+    onNavigate: (String) -> Unit
+) {
     val bottomMenuItems = listOf(
         BottomMenuItem.Home,
         BottomMenuItem.Favorites,
         BottomMenuItem.Profile
     )
-
-    var selectedRoute by remember { mutableStateOf("home") }
 
     Box(
         modifier = Modifier
@@ -50,42 +46,24 @@ fun BottomMenu() {
             contentScale = ContentScale.Crop
         )
 
-        // Затемняющий слой поверх изображения
-//        Box(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(
-//                    Brush.verticalGradient(  // Градиент снизу вверх (затемняет низ)
-//                        colors = listOf(
-//                            Color.Transparent,
-//                            Color.DarkGray.copy(alpha = 0.5f)
-//                        )
-//                    )
-//                )
-//        )
-
-        // Затемняющий слой поверх изображения
+        // Затемнение
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(90.dp)
-                .background(Color.DarkGray.copy(alpha = 0.4f))  // коэффицент затемнение
+                .background(Color.DarkGray.copy(alpha = 0.4f))
         )
 
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Spacer(modifier = Modifier.height(15.dp))  // Отступ сверху
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.height(15.dp))
 
-            NavigationBar(
-                containerColor = Color.Transparent
-            ) {
+            NavigationBar(containerColor = Color.Transparent) {
                 bottomMenuItems.forEach { item ->
-                    val isSelected = selectedRoute == item.route
+                    val isSelected = currentRoute == item.route
 
                     NavigationBarItem(
                         selected = isSelected,
-                        onClick = { selectedRoute = item.route },
+                        onClick = { onNavigate(item.route) },
                         icon = {
                             Icon(
                                 imageVector = if (isSelected) item.selectedIcon else item.icon,
@@ -105,10 +83,4 @@ fun BottomMenu() {
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BottomMenuPrewiew() {
-    BottomMenu()
 }

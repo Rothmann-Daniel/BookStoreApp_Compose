@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,8 +41,6 @@ import com.danielrothmann.bookstoreapp.R
 @Composable
 fun DrawerBody(
     modifier: Modifier = Modifier,
-    onSignOut: () -> Unit = {},
-    onDeleteAccount: () -> Unit = {},
     onCategoryClick: (String) -> Unit = {}
 ) {
     val categoriesList = listOf(
@@ -54,10 +53,11 @@ fun DrawerBody(
         "For Children",
         "IT",
         "Recipes",
-        "Аdventures",
+        "Adventures",
         "Comedy",
         "Biography"
     )
+
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -114,63 +114,7 @@ fun DrawerBody(
                     Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                // Кнопка выхода
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = onSignOut,
-                                indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
-                                interactionSource = remember { MutableInteractionSource() }
-                            )
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Sign out",
-                            tint = Color.Red.copy(alpha = 0.9f),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Sign Out",
-                            fontSize = 18.sp,
-                            color = Color.Red.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
 
-                // Кнопка удаления аккаунта
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = onDeleteAccount,
-                                indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
-                                interactionSource = remember { MutableInteractionSource() }
-                            )
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "Delete account",
-                            tint = Color.Red.copy(alpha = 0.9f),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Delete Account",
-                            fontSize = 18.sp,
-                            color = Color.Red.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
             }
         }
     }

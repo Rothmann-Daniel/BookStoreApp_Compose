@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.gms)
+    alias(libs.plugins.plugin.serialization)
 }
 
 android {
@@ -38,9 +39,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
 }
 
 dependencies {
@@ -59,6 +57,8 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     // Navigation
     implementation(libs.androidx.navigation.compose)
+    // Kotlin Serialization (для JSON)
+    implementation(libs.kotlin.serialization)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
