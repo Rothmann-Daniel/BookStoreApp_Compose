@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,21 +45,24 @@ fun DrawerBody(
     onCategoryClick: (String) -> Unit = {}
 ) {
     val categoriesList = listOf(
-        "Favorites",
         "Bestsellers",
         "Detective",
         "Novels",
         "Fiction",
         "Science and Technology",
         "Educational literature",
-        "For Children"
+        "For Children",
+        "IT",
+        "Recipes",
+        "Аdventures",
+        "Comedy",
+        "Biography"
     )
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.3f))
+        modifier = modifier.fillMaxSize()
     ) {
+        // Фоновое изображение
         Image(
             painter = painterResource(id = R.drawable.img_box_bg_drawerbody),
             contentDescription = "background",
@@ -68,79 +72,104 @@ fun DrawerBody(
             contentScale = ContentScale.FillBounds
         )
 
-        LazyColumn(
+        // Затемнение поверх изображения
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f))
+        )
+
+        // Контент (заголовок + список)
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // Категории
-            items(categoriesList) { category ->
-                CategoryItem(
-                    category = category,
-                    onClick = { onCategoryClick(category) }
+            // Заголовок
+            Text(
+                text = "Categories",
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
                 )
-            }
+            )
 
-            // Разделитель перед кнопками
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Кнопка выхода
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            onClick = onSignOut,
-                            indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
-                            interactionSource = remember { MutableInteractionSource() }
-                        )
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Sign out",
-                        tint = Color.Red.copy(alpha = 0.9f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Sign Out",
-                        fontSize = 18.sp,
-                        color = Color.Red.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
+            // Список категорий
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Категории
+                items(categoriesList) { category ->
+                    CategoryItem(
+                        category = category,
+                        onClick = { onCategoryClick(category) }
                     )
                 }
-            }
 
-            // Кнопка удаления аккаунта
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            onClick = onDeleteAccount,
-                            indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
-                            interactionSource = remember { MutableInteractionSource() }
+                // Разделитель перед кнопками
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                // Кнопка выхода
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                onClick = onSignOut,
+                                indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Sign out",
+                            tint = Color.Red.copy(alpha = 0.9f),
+                            modifier = Modifier.size(24.dp)
                         )
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete account",
-                        tint = Color.Red.copy(alpha = 0.9f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Delete Account",
-                        fontSize = 18.sp,
-                        color = Color.Red.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
-                    )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Sign Out",
+                            fontSize = 18.sp,
+                            color = Color.Red.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Кнопка удаления аккаунта
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                onClick = onDeleteAccount,
+                                indication = ripple(color = Color.Red.copy(alpha = 0.9f)),
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete account",
+                            tint = Color.Red.copy(alpha = 0.9f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Delete Account",
+                            fontSize = 18.sp,
+                            color = Color.Red.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

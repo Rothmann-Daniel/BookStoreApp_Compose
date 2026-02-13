@@ -117,7 +117,8 @@ fun MainScreen(
             },
             bottomBar = {
                 BottomMenu()
-            }
+            },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
 
         ) { paddingValues ->
             Column(
