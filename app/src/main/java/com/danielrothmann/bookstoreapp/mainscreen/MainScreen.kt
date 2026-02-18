@@ -27,6 +27,7 @@ import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.book.getAllBooks
 import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.danielrothmann.bookstoreapp.data.Book
+import com.danielrothmann.bookstoreapp.search.SearchBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
@@ -47,6 +48,17 @@ fun MainScreen(
     val db = remember { FirebaseFirestore.getInstance() }
     var books by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var searchQuery by remember { mutableStateOf("") }
+    var favoriteIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+
+    val filteredBooks = remember(searchQuery, books) {
+        if (searchQuery.length < 2) books
+        else books.filter {
+            it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.author.contains(searchQuery, ignoreCase = true) ||
+                    it.category.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     LaunchedEffect(Unit) {
         db.getAllBooks(
@@ -76,7 +88,7 @@ fun MainScreen(
                         modifier = Modifier.weight(1f),
                         categoryRepo = categoryRepo,
                         onCategoryClick = { category ->
-                            Toast.makeText(context, "Selected: $category", Toast.LENGTH_SHORT).show()
+                            searchQuery = category
                             scope.launch { drawerState.close() }
                         }
                     )
@@ -102,10 +114,16 @@ fun MainScreen(
                         title = { Text("Book Store", color = Color.White) },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color.White)
+                                Icon(
+                                    Icons.Default.Menu,
+                                    contentDescription = "Menu",
+                                    tint = Color.White
+                                )
                             }
                         },
-                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent
+                        )
                     )
                 },
                 bottomBar = {
@@ -133,26 +151,55 @@ fun MainScreen(
                         fontFamily = FontFamily.Cursive
                     )
 
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onSearch = { searchQuery = it },
+                        placeholder = "Search by title, author, category..."
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     when {
                         isLoading -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
                                 CircularProgressIndicator(color = Color.White)
                             }
                         }
-                        books.isEmpty() -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Книги не найдены", color = Color.White, fontSize = 16.sp)
+                        filteredBooks.isEmpty() -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (searchQuery.length >= 2)
+                                        "По запросу \"$searchQuery\" ничего не найдено"
+                                    else
+                                        "Книги не найдены",
+                                    color = Color.White,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
                         else -> {
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                items(books) { book ->
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(bottom = 16.dp)
+                            ) {
+                                items(filteredBooks, key = { it.id }) { book ->
                                     BookCard(
                                         book = book,
-                                        isFavorite = false,
-                                        onFavoriteClick = {
-                                            Toast.makeText(context, "Add to favorites", Toast.LENGTH_SHORT).show()
-
+                                        isFavorite = favoriteIds.contains(book.id),
+                                        onFavoriteClick = { clickedBook ->
+                                            favoriteIds = if (favoriteIds.contains(clickedBook.id)) {
+                                                favoriteIds - clickedBook.id
+                                            } else {
+                                                favoriteIds + clickedBook.id
+                                            }
                                         }
                                     )
                                 }
