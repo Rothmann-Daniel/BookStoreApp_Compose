@@ -33,7 +33,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ProfileScreen(
-    onSignOut: () -> Unit = {}
+    onSignOut: () -> Unit = {},
+    onNavigateToAddBook: () -> Unit = {} // параметр навигации
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -157,12 +158,7 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(
-                            onClick = {
-                                // TODO: Навигация на экран добавления книги
-                                Toast
-                                    .makeText(context, "Add Book screen (coming soon)", Toast.LENGTH_SHORT)
-                                    .show()
-                            },
+                            onClick = onNavigateToAddBook, // навигация
                             indication = ripple(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                             interactionSource = remember { MutableInteractionSource() }
                         ),

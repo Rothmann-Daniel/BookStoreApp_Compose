@@ -1,14 +1,18 @@
 package com.danielrothmann.bookstoreapp.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.danielrothmann.bookstoreapp.auth.LoginScreen
+import com.danielrothmann.bookstoreapp.book.AddBookScreen
+import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.favorites.FavoritesScreen
 import com.danielrothmann.bookstoreapp.mainscreen.MainScreen
 import com.danielrothmann.bookstoreapp.profile.ProfileScreen
@@ -19,6 +23,7 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Favorites : Screen("favorites")
     object Profile : Screen("profile")
+    object AddBook : Screen("add_book")
 }
 
 @Composable
@@ -35,6 +40,9 @@ fun NavGraph(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Home.route
+
+    // Создаем один экземпляр репозитория для всего графа навигации
+    val categoryRepo = remember { CategoryRepository() }
 
     NavHost(
         navController = navController,
@@ -57,7 +65,6 @@ fun NavGraph(
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     navController.navigate(route) {
-                        // Не добавляем в backstack при переключении между bottom menu
                         popUpTo(Screen.Home.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
@@ -68,6 +75,7 @@ fun NavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+                // MainScreen сам создает categoryRepo внутри, не нужно передавать
             )
         }
 
@@ -87,9 +95,7 @@ fun NavGraph(
                 },
                 contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
             ) { paddingValues ->
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.padding(paddingValues)
-                ) {
+                Box(modifier = Modifier.padding(paddingValues)) {
                     FavoritesScreen()
                 }
             }
@@ -111,18 +117,29 @@ fun NavGraph(
                 },
                 contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
             ) { paddingValues ->
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.padding(paddingValues)
-                ) {
+                Box(modifier = Modifier.padding(paddingValues)) {
                     ProfileScreen(
                         onSignOut = {
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0) { inclusive = true }
                             }
+                        },
+                        onNavigateToAddBook = {
+                            navController.navigate(Screen.AddBook.route)
                         }
                     )
                 }
             }
+        }
+
+        //  Передаем categoryRepo в AddBookScreen
+        composable(Screen.AddBook.route) {
+            AddBookScreen(
+                categoryRepo = categoryRepo, //  Передаем репозиторий
+                onBookAdded = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

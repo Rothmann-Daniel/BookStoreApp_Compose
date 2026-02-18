@@ -1,6 +1,7 @@
 package com.danielrothmann.bookstoreapp.data
 
 data class Book(
+    val id: String = "",
     val title: String = "",
     val author: String = "",
     val description: String = "",
@@ -9,5 +10,5 @@ data class Book(
     val price: Double = 0.0
 ) {
     // Обязательный пустой конструктор для Firestore
-    constructor() : this("", "", "", "", "", 0.0)
+    constructor() : this("","", "", "", "", "", 0.0)
 }
