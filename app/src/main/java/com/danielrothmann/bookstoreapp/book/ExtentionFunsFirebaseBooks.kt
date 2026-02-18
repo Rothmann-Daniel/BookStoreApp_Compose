@@ -39,7 +39,7 @@ fun FirebaseFirestore.getAllBooks(
         .get()
         .addOnSuccessListener { result ->
             val books = result.documents.mapNotNull { document ->
-                document.toObject(Book::class.java)
+                document.toObject(Book::class.java)?.copy(id = document.id)
             }
             onSuccess(books)
         }
