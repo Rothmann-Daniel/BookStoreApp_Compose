@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -365,6 +366,7 @@ fun BookDetailScreen(
                     }
 
                     // Кнопка купить только для пользователя
+                    // Кнопка купить только для не-админов
                     if (!isAdmin) {
                         Button(
                             onClick = { },
@@ -380,6 +382,61 @@ fun BookDetailScreen(
                                 text = "Купить за ${book.price} ₽",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+// Кнопка удалить только для админов
+                    if (isAdmin) {
+                        var showDeleteDialog by remember { mutableStateOf(false) }
+
+                        Button(
+                            onClick = { showDeleteDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red.copy(alpha = 0.8f)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Удалить книгу",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (showDeleteDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteDialog = false },
+                                title = { Text("Удалить книгу?") },
+                                text = { Text("Книга \"${book.title}\" будет удалена безвозвратно.") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            showDeleteDialog = false
+                                            db.deleteBook(
+                                                bookId = book.id,
+                                                context = context,
+                                                onSuccess = { onBack() }
+                                            )
+                                        }
+                                    ) {
+                                        Text("Удалить", color = Color.Red)
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteDialog = false }) {
+                                        Text("Отмена")
+                                    }
+                                }
                             )
                         }
                     }
