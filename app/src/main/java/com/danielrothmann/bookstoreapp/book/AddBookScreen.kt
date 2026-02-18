@@ -79,6 +79,17 @@ fun AddBookScreen(
                     .fillMaxWidth()
             )
 
+            // Category
+            DropDownMenuCategory(
+                categoryRepo = categoryRepository,
+                selectedCategory = categoryState.value,
+                onCategoryClick = { selectedCategory ->
+                    categoryState.value = selectedCategory
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Title
             RoundedCornerTextField(
                 value = titleState.value,
@@ -108,16 +119,7 @@ fun AddBookScreen(
                     .height(150.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Category
-            DropDownMenuCategory(
-                categoryRepo = categoryRepository,
-                selectedCategory = categoryState.value,
-                onCategoryClick = { selectedCategory ->
-                    categoryState.value = selectedCategory
-                }
-            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
