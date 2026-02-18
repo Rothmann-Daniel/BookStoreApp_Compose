@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
+import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -35,6 +37,7 @@ fun MainScreen(
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
+    val categoryRepo = remember { CategoryRepository() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -49,6 +52,7 @@ fun MainScreen(
                     DrawerHeader()
                     DrawerBody(
                         modifier = Modifier.weight(1f),
+                        categoryRepo = categoryRepo,
                         onCategoryClick = { category ->
                             Toast.makeText(context, "Selected: $category", Toast.LENGTH_SHORT).show()
                             scope.launch { drawerState.close() }
@@ -58,47 +62,58 @@ fun MainScreen(
             }
         }
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Book Store") },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
+        // Box снаружи Scaffold
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Фоновое изображение (самый нижний слой)
+            Image(
+                painter = painterResource(id = R.drawable.img_bg_mainscreen),
+                contentDescription = "background",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Затемнение поверх фона
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+            )
+
+            // Scaffold поверх всего
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                "Book Store",
+                                color = Color.White
                             )
-                        }
-                    }
-                )
-            },
-            bottomBar = {
-                BottomMenu(
-                    currentRoute = currentRoute,
-                    onNavigate = onNavigate
-                )
-            },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
-        ) { paddingValues ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Фоновое изображение
-                Image(
-                    painter = painterResource(id = R.drawable.img_bg_mainscreen_2),
-                    contentDescription = "background",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Затемнение
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                )
-
-                // Контент
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                scope.launch { drawerState.open() }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = "Menu",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                    )
+                },
+                bottomBar = {
+                    BottomMenu(
+                        currentRoute = currentRoute,
+                        onNavigate = onNavigate
+                    )
+                },
+                containerColor = Color.Transparent,
+                contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            ) { paddingValues ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()

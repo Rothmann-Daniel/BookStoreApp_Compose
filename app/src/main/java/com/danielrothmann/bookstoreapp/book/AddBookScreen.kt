@@ -26,17 +26,19 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun AddBookScreen(
-    onBookAdded: () -> Unit = {}
+    onBookAdded: () -> Unit = {},
+    categoryRepo: CategoryRepository
 ) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
+    val categoryRepository = remember { categoryRepo }
 
     // Состояния для полей
     val titleState = remember { mutableStateOf("") }
     val authorState = remember { mutableStateOf("") }
     val descriptionState = remember { mutableStateOf("") }
     val categoryState = remember { mutableStateOf("") }
-    val imageBase64State = remember { mutableStateOf<String?>(null) } // Base64
+    val imageBase64State = remember { mutableStateOf<String?>(null) }
     val priceState = remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -109,10 +111,12 @@ fun AddBookScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Category
-            RoundedCornerTextField(
-                value = categoryState.value,
-                label = "Category",
-                onValueChange = { categoryState.value = it }
+            DropDownMenuCategory(
+                categoryRepo = categoryRepository,
+                selectedCategory = categoryState.value,
+                onCategoryClick = { selectedCategory ->
+                    categoryState.value = selectedCategory
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -126,7 +130,7 @@ fun AddBookScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Image Picker с предпросмотром
+            // Image Picker
             ImagePickerCard(
                 imageBase64 = imageBase64State.value,
                 onImageSelected = { base64 ->
@@ -144,15 +148,16 @@ fun AddBookScreen(
                 text = "Add Book",
                 enabled = titleState.value.isNotBlank() &&
                         authorState.value.isNotBlank() &&
+                        categoryState.value.isNotBlank() &&
                         priceState.value.isNotBlank() &&
-                        imageBase64State.value != null, // Требуем изображение
+                        imageBase64State.value != null,
                 onClick = {
                     val book = Book(
                         title = titleState.value,
                         author = authorState.value,
                         description = descriptionState.value,
                         category = categoryState.value,
-                        imageUrl = imageBase64State.value ?: "", // Сохраняем Base64
+                        imageUrl = imageBase64State.value ?: "",
                         price = priceState.value.toDoubleOrNull() ?: 0.0
                     )
 
