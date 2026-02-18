@@ -34,7 +34,7 @@ fun BottomMenu(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(90.dp)
+            .height(120.dp)
     ) {
         // Фоновое изображение
         Image(
@@ -42,7 +42,7 @@ fun BottomMenu(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(90.dp),
+                .height(120.dp),
             contentScale = ContentScale.Crop
         )
 
@@ -50,7 +50,7 @@ fun BottomMenu(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(90.dp)
+                .height(120.dp)
                 .background(Color.DarkGray.copy(alpha = 0.4f))
         )
 

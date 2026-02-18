@@ -29,6 +29,7 @@ import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.auth.DeleteAccountDialog
 import com.danielrothmann.bookstoreapp.auth.deleteAccountWithReauth
 import com.danielrothmann.bookstoreapp.auth.signOutWithToast
+import com.danielrothmann.bookstoreapp.ui.theme.buttonIsenabled
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -163,7 +164,8 @@ fun ProfileScreen(
                             interactionSource = remember { MutableInteractionSource() }
                         ),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                        //containerColor = buttonIsenabled.copy(alpha = 0.9f)
+                       containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                     )
                 ) {
                     Row(
