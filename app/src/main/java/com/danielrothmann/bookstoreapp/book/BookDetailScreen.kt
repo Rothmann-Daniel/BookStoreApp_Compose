@@ -366,7 +366,6 @@ fun BookDetailScreen(
                     }
 
                     // Кнопка купить только для пользователя
-                    // Кнопка купить только для не-админов
                     if (!isAdmin) {
                         Button(
                             onClick = { },
@@ -386,7 +385,7 @@ fun BookDetailScreen(
                         }
                     }
 
-// Кнопка удалить только для админов
+                    // Кнопка удалить только для админов
                     if (isAdmin) {
                         var showDeleteDialog by remember { mutableStateOf(false) }
 
