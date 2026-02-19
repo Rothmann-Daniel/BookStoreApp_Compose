@@ -23,10 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.book.BookCard
+import com.danielrothmann.bookstoreapp.book.BookDetailScreen
 import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.book.getAllBooks
 import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.danielrothmann.bookstoreapp.data.Book
+import com.danielrothmann.bookstoreapp.profile.AdminChecker
 import com.danielrothmann.bookstoreapp.search.SearchBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -51,6 +53,9 @@ fun MainScreen(
     var searchQuery by remember { mutableStateOf("") }
     var favoriteIds by remember { mutableStateOf<Set<String>>(emptySet()) }
 
+    var selectedBook by remember { mutableStateOf<Book?>(null) }
+    var isAdmin by remember { mutableStateOf(false) }
+
     val filteredBooks = remember(searchQuery, books) {
         if (searchQuery.length < 2) books
         else books.filter {
@@ -61,6 +66,7 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
+        AdminChecker.isAdmin { isAdmin = it }
         db.getAllBooks(
             onSuccess = { result ->
                 books = result
@@ -73,135 +79,146 @@ fun MainScreen(
         )
     }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet(
-                modifier = Modifier.fillMaxWidth(0.7f),
-                drawerContainerColor = Color.Transparent,
-                drawerContentColor = Color.White,
-                windowInsets = WindowInsets(0, 0, 0, 0)
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    DrawerHeader()
-                    DrawerBody(
-                        modifier = Modifier.weight(1f),
-                        categoryRepo = categoryRepo,
-                        onCategoryClick = { category ->
-                            searchQuery = category
-                            scope.launch { drawerState.close() }
-                        }
-                    )
+    // Условный рендеринг вместо return
+    if (selectedBook != null) {
+        BookDetailScreen(
+            book = selectedBook!!,
+            isAdmin = isAdmin,
+            onBack = { selectedBook = null },
+            onEditClick = { /* навигация на редактирование */ }
+        )
+    } else {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                    modifier = Modifier.fillMaxWidth(0.7f),
+                    drawerContainerColor = Color.Transparent,
+                    drawerContentColor = Color.White,
+                    windowInsets = WindowInsets(0, 0, 0, 0)
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        DrawerHeader()
+                        DrawerBody(
+                            modifier = Modifier.weight(1f),
+                            categoryRepo = categoryRepo,
+                            onCategoryClick = { category ->
+                                searchQuery = category
+                                scope.launch { drawerState.close() }
+                            }
+                        )
+                    }
                 }
             }
-        }
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = R.drawable.img_bg_mainscreen),
-                contentDescription = "background",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
-            )
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text("Book Store", color = Color.White) },
-                        navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Menu",
-                                    tint = Color.White
-                                )
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent
-                        )
-                    )
-                },
-                bottomBar = {
-                    BottomMenu(currentRoute = currentRoute, onNavigate = onNavigate)
-                },
-                containerColor = Color.Transparent,
-                contentWindowInsets = WindowInsets(0, 0, 0, 0)
-            ) { paddingValues ->
-                Column(
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = R.drawable.img_bg_mainscreen),
+                    contentDescription = "background",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(paddingValues)
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        text = "Welcome to Book Store!",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        fontFamily = FontFamily.Cursive
-                    )
-
-                    SearchBar(
-                        query = searchQuery,
-                        onQueryChange = { searchQuery = it },
-                        onSearch = { searchQuery = it },
-                        placeholder = "Search by title, author, category..."
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    when {
-                        isLoading -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = Color.White)
-                            }
-                        }
-                        filteredBooks.isEmpty() -> {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = if (searchQuery.length >= 2)
-                                        "По запросу \"$searchQuery\" ничего не найдено"
-                                    else
-                                        "Книги не найдены",
-                                    color = Color.White,
-                                    fontSize = 16.sp,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                        else -> {
-                            LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(bottom = 16.dp)
-                            ) {
-                                items(filteredBooks, key = { it.id }) { book ->
-                                    BookCard(
-                                        book = book,
-                                        isFavorite = favoriteIds.contains(book.id),
-                                        onFavoriteClick = { clickedBook ->
-                                            favoriteIds = if (favoriteIds.contains(clickedBook.id)) {
-                                                favoriteIds - clickedBook.id
-                                            } else {
-                                                favoriteIds + clickedBook.id
-                                            }
-                                        }
+                        .background(Color.Black.copy(alpha = 0.3f))
+                )
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Book Store", color = Color.White) },
+                            navigationIcon = {
+                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    Icon(
+                                        Icons.Default.Menu,
+                                        contentDescription = "Menu",
+                                        tint = Color.White
                                     )
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Transparent
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        BottomMenu(currentRoute = currentRoute, onNavigate = onNavigate)
+                    },
+                    containerColor = Color.Transparent,
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0)
+                ) { paddingValues ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            text = "Welcome to Book Store!",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            fontFamily = FontFamily.Cursive
+                        )
+
+                        SearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            onSearch = { searchQuery = it },
+                            placeholder = "Search by title, author, category..."
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        when {
+                            isLoading -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(color = Color.White)
+                                }
+                            }
+                            filteredBooks.isEmpty() -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (searchQuery.length >= 2)
+                                            "По запросу \"$searchQuery\" ничего не найдено"
+                                        else
+                                            "Книги не найдены",
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                            else -> {
+                                LazyColumn(
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    contentPadding = PaddingValues(bottom = 16.dp)
+                                ) {
+                                    items(filteredBooks, key = { it.id }) { book ->
+                                        BookCard(
+                                            book = book,
+                                            isFavorite = favoriteIds.contains(book.id),
+                                            onFavoriteClick = { clickedBook ->
+                                                favoriteIds = if (favoriteIds.contains(clickedBook.id)) {
+                                                    favoriteIds - clickedBook.id
+                                                } else {
+                                                    favoriteIds + clickedBook.id
+                                                }
+                                            },
+                                            onClick = { selectedBook = it }
+                                        )
+                                    }
                                 }
                             }
                         }

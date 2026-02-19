@@ -65,7 +65,7 @@ fun DropDownMenuCategory(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .heightIn(max = 400.dp) // ✅ Ограничиваем максимальную высоту
+                .heightIn(max = 400.dp) //  Ограничиваем максимальную высоту
                 .background(Color.White)
         ) {
             categories.forEachIndexed { index, category ->

@@ -147,7 +147,7 @@ fun LoginScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 64.dp)
                 .fillMaxWidth()
         )
     }

@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,8 @@ import com.danielrothmann.bookstoreapp.data.Book
 fun BookCard(
     book: Book,
     isFavorite: Boolean = false,
-    onFavoriteClick: (Book) -> Unit = {}
+    onFavoriteClick: (Book) -> Unit = {},
+    onClick: (Book) -> Unit = {}
 ) {
     val bitmap = remember(book.imageUrl) {
         if (book.imageUrl.isNotBlank()) {
@@ -55,7 +57,8 @@ fun BookCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+        .clickable { onClick(book) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.15f)
