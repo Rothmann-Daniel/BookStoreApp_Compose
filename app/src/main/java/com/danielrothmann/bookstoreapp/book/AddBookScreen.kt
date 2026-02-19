@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,16 +23,15 @@ import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.auth.AuthButton
 import com.danielrothmann.bookstoreapp.auth.RoundedCornerTextField
 import com.danielrothmann.bookstoreapp.data.Book
+import com.danielrothmann.bookstoreapp.data.Category
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun AddBookScreen(
-    onBookAdded: () -> Unit = {},
-    categoryRepo: CategoryRepository
+    onBookAdded: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
-    val categoryRepository = remember { categoryRepo }
 
     // Состояния для полей
     val titleState = remember { mutableStateOf("") }
@@ -40,6 +40,40 @@ fun AddBookScreen(
     val categoryState = remember { mutableStateOf("") }
     val imageBase64State = remember { mutableStateOf<String?>(null) }
     val priceState = remember { mutableStateOf("") }
+
+    // Состояния для категорий из Firestore
+    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var isLoadingCategories by remember { mutableStateOf(true) }
+
+
+
+    fun loadCategories() {
+        isLoadingCategories = true
+        firestore.collection("categories")
+            .whereEqualTo("isActive", true)
+            .get()
+            .addOnSuccessListener { result ->
+                categories = result.documents.mapNotNull { document ->
+                    Category(
+                        id = document.id,
+                        name = document.getString("name") ?: "",
+                        description = document.getString("description") ?: "",
+                        bookCount = document.getLong("bookCount")?.toInt() ?: 0,
+                        isActive = document.getBoolean("isActive") ?: true
+                    )
+                }.sortedBy { it.name }
+                isLoadingCategories = false
+            }
+            .addOnFailureListener {
+                categories = emptyList()
+                isLoadingCategories = false
+            }
+    }
+
+    // Загружаем категории из Firestore
+    LaunchedEffect(Unit) {
+        loadCategories()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Фоновое изображение
@@ -80,13 +114,27 @@ fun AddBookScreen(
             )
 
             // Category
-            DropDownMenuCategory(
-                categoryRepo = categoryRepository,
-                selectedCategory = categoryState.value,
-                onCategoryClick = { selectedCategory ->
-                    categoryState.value = selectedCategory
+            if (isLoadingCategories) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
-            )
+            } else {
+                DropDownMenuCategory(
+                    categories = categories.map { it.name },
+                    selectedCategory = categoryState.value,
+                    onCategoryClick = { selectedCategory ->
+                        categoryState.value = selectedCategory
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -119,8 +167,6 @@ fun AddBookScreen(
                     .height(150.dp)
             )
 
-
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Price
@@ -152,16 +198,13 @@ fun AddBookScreen(
                         authorState.value.isNotBlank() &&
                         categoryState.value.isNotBlank() &&
                         priceState.value.isNotBlank(),
-                 /** раскомментировать, если наличие обложки обязательно
-                      //  && imageBase64State.value != null,
-                 */
                 onClick = {
                     val book = Book(
                         title = titleState.value,
                         author = authorState.value,
                         description = descriptionState.value,
                         category = categoryState.value,
-                        imageUrl = imageBase64State.value ?: "", //пустая строка, если изображение не выбрано
+                        imageUrl = imageBase64State.value ?: "",
                         price = priceState.value.toDoubleOrNull() ?: 0.0
                     )
 

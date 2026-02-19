@@ -12,7 +12,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.danielrothmann.bookstoreapp.auth.LoginScreen
 import com.danielrothmann.bookstoreapp.book.AddBookScreen
-import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.category.CategoriesManagementScreen
 import com.danielrothmann.bookstoreapp.favorites.FavoritesScreen
 import com.danielrothmann.bookstoreapp.mainscreen.MainScreen
@@ -43,8 +42,6 @@ fun NavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Home.route
 
-    // Создаем один экземпляр репозитория для всего графа навигации
-    val categoryRepo = remember { CategoryRepository() }
 
     NavHost(
         navController = navController,
@@ -140,7 +137,6 @@ fun NavGraph(
         //  Передаем categoryRepo в AddBookScreen
         composable(Screen.AddBook.route) {
             AddBookScreen(
-                categoryRepo = categoryRepo, //  Передаем репозиторий
                 onBookAdded = {
                     navController.popBackStack()
                 }
