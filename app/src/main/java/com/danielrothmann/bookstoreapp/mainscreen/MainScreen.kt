@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.book.BookCard
 import com.danielrothmann.bookstoreapp.book.BookDetailScreen
-import com.danielrothmann.bookstoreapp.book.CategoryRepository
 import com.danielrothmann.bookstoreapp.book.getAllBooks
 import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.danielrothmann.bookstoreapp.data.Book
@@ -41,11 +40,11 @@ fun MainScreen(
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit = {}
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Open)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
-    val categoryRepo = remember { CategoryRepository() }
+
 
     val db = remember { FirebaseFirestore.getInstance() }
     var books by remember { mutableStateOf<List<Book>>(emptyList()) }
@@ -101,7 +100,6 @@ fun MainScreen(
                         DrawerHeader()
                         DrawerBody(
                             modifier = Modifier.weight(1f),
-                            categoryRepo = categoryRepo,
                             onCategoryClick = { category ->
                                 searchQuery = category
                                 scope.launch { drawerState.close() }

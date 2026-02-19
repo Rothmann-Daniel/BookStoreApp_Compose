@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.danielrothmann.bookstoreapp.auth.LoginScreen
 import com.danielrothmann.bookstoreapp.book.AddBookScreen
-import com.danielrothmann.bookstoreapp.book.CategoryRepository
+import com.danielrothmann.bookstoreapp.category.CategoriesManagementScreen
 import com.danielrothmann.bookstoreapp.favorites.FavoritesScreen
 import com.danielrothmann.bookstoreapp.mainscreen.MainScreen
 import com.danielrothmann.bookstoreapp.profile.ProfileScreen
@@ -24,6 +24,7 @@ sealed class Screen(val route: String) {
     object Favorites : Screen("favorites")
     object Profile : Screen("profile")
     object AddBook : Screen("add_book")
+    object Categories : Screen("categories")
 }
 
 @Composable
@@ -41,8 +42,6 @@ fun NavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Home.route
 
-    // Создаем один экземпляр репозитория для всего графа навигации
-    val categoryRepo = remember { CategoryRepository() }
 
     NavHost(
         navController = navController,
@@ -126,6 +125,9 @@ fun NavGraph(
                         },
                         onNavigateToAddBook = {
                             navController.navigate(Screen.AddBook.route)
+                        },
+                        onNavigateToCategories = { // ДОБАВЬТЕ ЭТУ СТРОКУ
+                            navController.navigate(Screen.Categories.route)
                         }
                     )
                 }
@@ -135,8 +137,16 @@ fun NavGraph(
         //  Передаем categoryRepo в AddBookScreen
         composable(Screen.AddBook.route) {
             AddBookScreen(
-                categoryRepo = categoryRepo, //  Передаем репозиторий
                 onBookAdded = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // экран для управления категориями
+        composable(Screen.Categories.route) {
+            CategoriesManagementScreen(
+                onBack = {
                     navController.popBackStack()
                 }
             )

@@ -1,5 +1,6 @@
 package com.danielrothmann.bookstoreapp.profile
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
@@ -35,7 +37,8 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun ProfileScreen(
     onSignOut: () -> Unit = {},
-    onNavigateToAddBook: () -> Unit = {} // параметр навигации
+    onNavigateToAddBook: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -165,7 +168,7 @@ fun ProfileScreen(
                         ),
                     colors = CardDefaults.cardColors(
                         //containerColor = buttonIsenabled.copy(alpha = 0.9f)
-                       containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                     )
                 ) {
                     Row(
@@ -190,109 +193,151 @@ fun ProfileScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Кнопка Sign Out
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        onClick = {
-                            auth.signOutWithToast(context) {
-                                onSignOut()
-                            }
-                        },
-                        indication = ripple(color = Color.Red.copy(alpha = 0.3f)),
-                        interactionSource = remember { MutableInteractionSource() }
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Sign out",
-                        tint = Color.Red.copy(alpha = 0.9f)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Sign Out",
-                        fontSize = 18.sp,
-                        color = Color.Red.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Кнопка Delete Account
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        onClick = { showDeleteDialog = true },
-                        indication = ripple(color = Color.Red.copy(alpha = 0.3f)),
-                        interactionSource = remember { MutableInteractionSource() }
-                    ),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.9f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Delete account",
-                        tint = Color.Red.copy(alpha = 0.9f)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Delete Account",
-                        fontSize = 18.sp,
-                        color = Color.Red.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-
-            // Индикатор загрузки
-            if (isCheckingAdmin) {
                 Spacer(modifier = Modifier.height(16.dp))
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White
+
+                // кнопка "Manage Categories"
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            onClick = onNavigateToCategories,
+                            indication = ripple(
+                                color = MaterialTheme.colorScheme.secondary.copy(
+                                    alpha = 0.3f
+                                )
+                            ),
+                            interactionSource = remember { MutableInteractionSource() }
+                        ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Category,
+                            contentDescription = "Manage Categories",
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Manage Categories",
+                            fontSize = 18.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+
+        // Кнопка Sign Out
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClick = {
+                        auth.signOutWithToast(context) {
+                            onSignOut()
+                        }
+                    },
+                    indication = ripple(color = Color.Red.copy(alpha = 0.3f)),
+                    interactionSource = remember { MutableInteractionSource() }
+                ),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White.copy(alpha = 0.9f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Sign out",
+                    tint = Color.Red.copy(alpha = 0.9f)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Sign Out",
+                    fontSize = 18.sp,
+                    color = Color.Red.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
-    }
 
-    // Диалог удаления аккаунта
-    if (showDeleteDialog) {
-        DeleteAccountDialog(
-            onDismiss = { showDeleteDialog = false },
-            onConfirm = { email, password ->
-                auth.deleteAccountWithReauth(
-                    email = email,
-                    password = password,
-                    context = context,
-                    onSuccess = {
-                        showDeleteDialog = false
-                        onSignOut()
-                    },
-                    onFailure = { }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Кнопка Delete Account
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClick = { showDeleteDialog = true },
+                    indication = ripple(color = Color.Red.copy(alpha = 0.3f)),
+                    interactionSource = remember { MutableInteractionSource() }
+                ),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White.copy(alpha = 0.9f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete account",
+                    tint = Color.Red.copy(alpha = 0.9f)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Delete Account",
+                    fontSize = 18.sp,
+                    color = Color.Red.copy(alpha = 0.9f),
+                    fontWeight = FontWeight.Medium
                 )
             }
-        )
+        }
+
+        // Индикатор загрузки
+        if (isCheckingAdmin) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = Color.White
+            )
+        }
     }
+}
+
+// Диалог удаления аккаунта
+if (showDeleteDialog) {
+    DeleteAccountDialog(
+        onDismiss = { showDeleteDialog = false },
+        onConfirm = { email, password ->
+            auth.deleteAccountWithReauth(
+                email = email,
+                password = password,
+                context = context,
+                onSuccess = {
+                    showDeleteDialog = false
+                    onSignOut()
+                },
+                onFailure = { }
+            )
+        }
+    )
+}
 }

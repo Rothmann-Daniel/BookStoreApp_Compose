@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.data.Book
+import com.danielrothmann.bookstoreapp.data.Category
 import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +53,38 @@ fun BookDetailScreen(
     var editPrice by remember { mutableStateOf(book.price.toString()) }
     var editCategory by remember { mutableStateOf(book.category) }
     var editImageBase64 by remember { mutableStateOf(book.imageUrl) }
+
+    // Состояния для категорий из Firestore
+    var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
+    var isLoadingCategories by remember { mutableStateOf(true) }
+
+    fun loadCategories() {
+        isLoadingCategories = true
+        db.collection("categories")
+            .whereEqualTo("isActive", true)
+            .get()
+            .addOnSuccessListener { result ->
+                categories = result.documents.mapNotNull { document ->
+                    Category(
+                        id = document.id,
+                        name = document.getString("name") ?: "",
+                        description = document.getString("description") ?: "",
+                        bookCount = document.getLong("bookCount")?.toInt() ?: 0,
+                        isActive = document.getBoolean("isActive") ?: true
+                    )
+                }.sortedBy { it.name }
+                isLoadingCategories = false
+            }
+            .addOnFailureListener {
+                categories = emptyList()
+                isLoadingCategories = false
+            }
+    }
+
+    // Загружаем категории из Firestore
+    LaunchedEffect(Unit) {
+        loadCategories()
+    }
 
     // Декодируем bitmap для режима просмотра
     val bitmap = remember(book.imageUrl) {
@@ -84,8 +117,6 @@ fun BookDetailScreen(
         focusedContainerColor = Color.White.copy(alpha = 0.1f),
         unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
     )
-
-    val categoryRepo = remember { CategoryRepository() }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -191,12 +222,26 @@ fun BookDetailScreen(
                     )
 
                     // Дропдаун для категории
-                    DropDownMenuCategory(
-                        categoryRepo = categoryRepo,
-                        selectedCategory = editCategory,
-                        onCategoryClick = { editCategory = it },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (isLoadingCategories) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    } else {
+                        DropDownMenuCategory(
+                            categories = categories.map { it.name },
+                            selectedCategory = editCategory,
+                            onCategoryClick = { editCategory = it },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                     OutlinedTextField(
                         value = editPrice,
@@ -229,18 +274,20 @@ fun BookDetailScreen(
                                 category = editCategory,
                                 imageUrl = editImageBase64
                             )
-                            db.collection("books")
-                                .document(book.id)
-                                .set(updatedBook)
-                                .addOnSuccessListener {
+                            // Используем extension функцию updateBook
+                            db.updateBook(
+                                bookId = book.id,
+                                updatedBook = updatedBook,
+                                oldCategory = book.category,
+                                context = context,
+                                onSuccess = {
                                     isSaving = false
                                     isEditing = false
-                                    Toast.makeText(context, "Книга обновлена", Toast.LENGTH_SHORT).show()
-                                }
-                                .addOnFailureListener { e ->
+                                },
+                                onFailure = {
                                     isSaving = false
-                                    Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -423,6 +470,7 @@ fun BookDetailScreen(
                                             showDeleteDialog = false
                                             db.deleteBook(
                                                 bookId = book.id,
+                                                bookCategory = book.category,
                                                 context = context,
                                                 onSuccess = { onBack() }
                                             )

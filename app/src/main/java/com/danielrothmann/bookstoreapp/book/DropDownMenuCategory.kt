@@ -1,5 +1,6 @@
 package com.danielrothmann.bookstoreapp.book
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,11 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,40 +18,41 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun DropDownMenuCategory(
-    categoryRepo: CategoryRepository,
+    categories: List<String>,
     selectedCategory: String = "",
     onCategoryClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val categories = categoryRepo.allCategories
 
     Box(modifier = modifier.fillMaxWidth()) {
-        // Поле выбора
-        Box(
+        // Поле выбора - с прозрачным фоном
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .border(1.dp, Color.LightGray, RoundedCornerShape(10.dp))
-                .background(Color.White, RoundedCornerShape(10.dp))
-                .clickable { expanded = true }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            contentAlignment = Alignment.CenterStart
+                .clickable { expanded = true },
+            shape = RoundedCornerShape(12.dp),
+            color = Color.White.copy(alpha = 0.05f),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (selectedCategory.isNotBlank()) selectedCategory else "Select Category",
-                    color = if (selectedCategory.isNotBlank()) Color.Black else Color.Gray,
+                    text = if (selectedCategory.isNotBlank()) selectedCategory else "Выберите категорию",
+                    color = if (selectedCategory.isNotBlank()) Color.White else Color.White.copy(alpha = 0.6f),
                     fontSize = 16.sp
                 )
+
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Dropdown",
-                    tint = Color.Gray
+                    tint = Color.White.copy(alpha = 0.6f)
                 )
             }
         }
@@ -65,31 +63,45 @@ fun DropDownMenuCategory(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .heightIn(max = 400.dp) //  Ограничиваем максимальную высоту
-                .background(Color.White)
+                .heightIn(max = 400.dp)
+                .background(Color(0xFF2A2A2A).copy(alpha = 0.95f))
+                .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
         ) {
-            categories.forEachIndexed { index, category ->
+            if (categories.isEmpty()) {
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = category,
+                            text = "Нет доступных категорий",
                             fontSize = 16.sp,
-                            color = Color.Black
+                            color = Color.White.copy(alpha = 0.6f)
                         )
                     },
-                    onClick = {
-                        onCategoryClick(category)
-                        expanded = false
-                    }
+                    onClick = { expanded = false }
                 )
-
-                // Разделитель
-                if (index < categories.size - 1) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 12.dp),
-                        thickness = 1.dp,
-                        color = Color.LightGray.copy(alpha = 0.3f)
+            } else {
+                categories.forEachIndexed { index, category ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = category,
+                                fontSize = 16.sp,
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            onCategoryClick(category)
+                            expanded = false
+                        }
                     )
+
+                    // Разделитель
+                    if (index < categories.size - 1) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            thickness = 1.dp,
+                            color = Color.White.copy(alpha = 0.2f)
+                        )
+                    }
                 }
             }
         }
