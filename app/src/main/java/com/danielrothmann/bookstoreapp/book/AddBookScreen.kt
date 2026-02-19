@@ -151,15 +151,17 @@ fun AddBookScreen(
                 enabled = titleState.value.isNotBlank() &&
                         authorState.value.isNotBlank() &&
                         categoryState.value.isNotBlank() &&
-                        priceState.value.isNotBlank() &&
-                        imageBase64State.value != null,
+                        priceState.value.isNotBlank(),
+                 /** раскомментировать, если наличие обложки обязательно
+                      //  && imageBase64State.value != null,
+                 */
                 onClick = {
                     val book = Book(
                         title = titleState.value,
                         author = authorState.value,
                         description = descriptionState.value,
                         category = categoryState.value,
-                        imageUrl = imageBase64State.value ?: "",
+                        imageUrl = imageBase64State.value ?: "", //пустая строка, если изображение не выбрано
                         price = priceState.value.toDoubleOrNull() ?: 0.0
                     )
 
