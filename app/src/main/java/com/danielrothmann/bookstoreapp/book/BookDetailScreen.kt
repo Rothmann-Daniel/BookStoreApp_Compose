@@ -423,6 +423,7 @@ fun BookDetailScreen(
                                             showDeleteDialog = false
                                             db.deleteBook(
                                                 bookId = book.id,
+                                                bookCategory = book.category, // Передаем категорию
                                                 context = context,
                                                 onSuccess = { onBack() }
                                             )

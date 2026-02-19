@@ -2,6 +2,7 @@ package com.danielrothmann.bookstoreapp.book
 
 import android.content.Context
 import android.widget.Toast
+import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.updateCategoryBookCount
 import com.danielrothmann.bookstoreapp.data.Book
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -16,6 +17,10 @@ fun FirebaseFirestore.addBook(
         .add(book)
         .addOnSuccessListener { documentReference ->
             val bookId = documentReference.id
+
+            // Обновляем счетчик книг в категории
+            this.updateCategoryBookCount(book.category, 1)
+
             onSuccess(bookId)
             Toast.makeText(
                 context,
@@ -73,6 +78,7 @@ fun FirebaseFirestore.getBooksByCategory(
 // Extension функция для удаления книги
 fun FirebaseFirestore.deleteBook(
     bookId: String,
+    bookCategory: String, // Добавляем параметр категории
     context: Context,
     onSuccess: () -> Unit = {},
     onFailure: (String) -> Unit = {}
@@ -81,6 +87,9 @@ fun FirebaseFirestore.deleteBook(
         .document(bookId)
         .delete()
         .addOnSuccessListener {
+            // Уменьшаем счетчик книг в категории
+            this.updateCategoryBookCount(bookCategory, -1)
+
             onSuccess()
             Toast.makeText(
                 context,
