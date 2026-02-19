@@ -4,28 +4,31 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.danielrothmann.bookstoreapp.R
-import com.danielrothmann.bookstoreapp.auth.AuthButton
-import com.danielrothmann.bookstoreapp.auth.RoundedCornerTextField
 import com.danielrothmann.bookstoreapp.data.Book
 import com.danielrothmann.bookstoreapp.data.Category
 import com.google.firebase.firestore.FirebaseFirestore
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddBookScreen(
     onBookAdded: () -> Unit = {}
@@ -45,7 +48,18 @@ fun AddBookScreen(
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var isLoadingCategories by remember { mutableStateOf(true) }
 
-
+    // Цвета для полей ввода как в BookDetailScreen
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        focusedBorderColor = Color.White.copy(alpha = 0.8f),
+        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+        focusedLabelColor = Color.White,
+        unfocusedLabelColor = Color.White.copy(alpha = 0.6f),
+        cursorColor = Color.White,
+        focusedContainerColor = Color.White.copy(alpha = 0.1f),
+        unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
+    )
 
     fun loadCategories() {
         isLoadingCategories = true
@@ -138,42 +152,57 @@ fun AddBookScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Title
-            RoundedCornerTextField(
+            // Title OutlinedTextField с прозрачным фоном
+            OutlinedTextField(
                 value = titleState.value,
-                label = "Title",
-                onValueChange = { titleState.value = it }
+                onValueChange = { titleState.value = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Author
-            RoundedCornerTextField(
+            OutlinedTextField(
                 value = authorState.value,
-                label = "Author",
-                onValueChange = { authorState.value = it }
+                onValueChange = { authorState.value = it },
+                label = { Text("Author") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Description
-            RoundedCornerTextField(
+            OutlinedTextField(
                 value = descriptionState.value,
-                label = "Description",
-                maxLines = 5,
                 onValueChange = { descriptionState.value = it },
+                label = { Text("Description") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(150.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                minLines = 4,
+                maxLines = 6
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Price
-            RoundedCornerTextField(
+            OutlinedTextField(
                 value = priceState.value,
-                label = "Price",
-                onValueChange = { priceState.value = it }
+                onValueChange = { priceState.value = it },
+                label = { Text("Price") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -192,12 +221,7 @@ fun AddBookScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Add Book Button
-            AuthButton(
-                text = "Add Book",
-                enabled = titleState.value.isNotBlank() &&
-                        authorState.value.isNotBlank() &&
-                        categoryState.value.isNotBlank() &&
-                        priceState.value.isNotBlank(),
+            Button(
                 onClick = {
                     val book = Book(
                         title = titleState.value,
@@ -226,8 +250,27 @@ fun AddBookScreen(
                             // Ошибка показана в Toast
                         }
                     )
-                }
-            )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = titleState.value.isNotBlank() &&
+                        authorState.value.isNotBlank() &&
+                        categoryState.value.isNotBlank() &&
+                        priceState.value.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                )
+            ) {
+                Text(
+                    text = "Add Book",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -242,7 +285,7 @@ fun AddBookScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
+                .padding(bottom = 32.dp)
                 .fillMaxWidth()
         )
     }
