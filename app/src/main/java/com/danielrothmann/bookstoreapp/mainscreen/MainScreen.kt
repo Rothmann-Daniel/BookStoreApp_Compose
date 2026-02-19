@@ -45,7 +45,6 @@ fun MainScreen(
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()
 
-
     val db = remember { FirebaseFirestore.getInstance() }
     var books by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -64,8 +63,9 @@ fun MainScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        AdminChecker.isAdmin { isAdmin = it }
+    // Функция для загрузки книг
+    fun loadBooks() {
+        isLoading = true
         db.getAllBooks(
             onSuccess = { result ->
                 books = result
@@ -78,12 +78,24 @@ fun MainScreen(
         )
     }
 
-    // Условный рендеринг вместо return
+    // Загружаем книги при старте
+    LaunchedEffect(Unit) {
+        AdminChecker.isAdmin { isAdmin = it }
+        loadBooks()
+    }
+
+    // Условный рендеринг
     if (selectedBook != null) {
         BookDetailScreen(
             book = selectedBook!!,
             isAdmin = isAdmin,
-            onBack = { selectedBook = null },
+            onBack = {
+                selectedBook = null
+                loadBooks() // Перезагружаем книги после закрытия деталей
+            },
+            onBookUpdated = { // коллбек для обновления после редактирования
+                loadBooks() // Перезагружаем книги после обновления
+            },
             onEditClick = { /* навигация на редактирование */ }
         )
     } else {
@@ -226,3 +238,4 @@ fun MainScreen(
         }
     }
 }
+

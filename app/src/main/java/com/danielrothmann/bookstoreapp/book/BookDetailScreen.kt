@@ -39,6 +39,7 @@ fun BookDetailScreen(
     book: Book,
     isAdmin: Boolean = false,
     onBack: () -> Unit = {},
+    onBookUpdated: () -> Unit = {},
     onEditClick: (Book) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -47,12 +48,27 @@ fun BookDetailScreen(
     var isEditing by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
 
-    var editTitle by remember { mutableStateOf(book.title) }
-    var editAuthor by remember { mutableStateOf(book.author) }
-    var editDescription by remember { mutableStateOf(book.description) }
-    var editPrice by remember { mutableStateOf(book.price.toString()) }
-    var editCategory by remember { mutableStateOf(book.category) }
-    var editImageBase64 by remember { mutableStateOf(book.imageUrl) }
+    // Состояние для текущей книги (обновляется при изменении)
+    var currentBook by remember { mutableStateOf(book) }
+
+    // Состояния для редактирования
+    var editTitle by remember { mutableStateOf(currentBook.title) }
+    var editAuthor by remember { mutableStateOf(currentBook.author) }
+    var editDescription by remember { mutableStateOf(currentBook.description) }
+    var editPrice by remember { mutableStateOf(currentBook.price.toString()) }
+    var editCategory by remember { mutableStateOf(currentBook.category) }
+    var editImageBase64 by remember { mutableStateOf(currentBook.imageUrl) }
+
+    // Обновляем состояния при изменении входной книги
+    LaunchedEffect(book) {
+        currentBook = book
+        editTitle = book.title
+        editAuthor = book.author
+        editDescription = book.description
+        editPrice = book.price.toString()
+        editCategory = book.category
+        editImageBase64 = book.imageUrl
+    }
 
     // Состояния для категорий из Firestore
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
@@ -87,20 +103,10 @@ fun BookDetailScreen(
     }
 
     // Декодируем bitmap для режима просмотра
-    val bitmap = remember(book.imageUrl) {
-        if (book.imageUrl.isNotBlank()) {
+    val bitmap = remember(currentBook.imageUrl) {
+        if (currentBook.imageUrl.isNotBlank()) {
             runCatching {
-                val bytes = Base64.decode(book.imageUrl, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            }.getOrNull()
-        } else null
-    }
-
-    // Декодируем bitmap для режима редактирования (обновляется при смене фото)
-    val editBitmap = remember(editImageBase64) {
-        if (editImageBase64.isNotBlank()) {
-            runCatching {
-                val bytes = Base64.decode(editImageBase64, Base64.DEFAULT)
+                val bytes = Base64.decode(currentBook.imageUrl, Base64.DEFAULT)
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
             }.getOrNull()
         } else null
@@ -136,7 +142,7 @@ fun BookDetailScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (isEditing) "Редактирование" else book.title,
+                            text = if (isEditing) "Редактирование" else currentBook.title,
                             color = Color.White,
                             maxLines = 1
                         )
@@ -145,12 +151,12 @@ fun BookDetailScreen(
                         IconButton(onClick = {
                             if (isEditing) {
                                 // Сброс всех полей при отмене
-                                editTitle = book.title
-                                editAuthor = book.author
-                                editDescription = book.description
-                                editPrice = book.price.toString()
-                                editCategory = book.category
-                                editImageBase64 = book.imageUrl
+                                editTitle = currentBook.title
+                                editAuthor = currentBook.author
+                                editDescription = currentBook.description
+                                editPrice = currentBook.price.toString()
+                                editCategory = currentBook.category
+                                editImageBase64 = currentBook.imageUrl
                                 isEditing = false
                             } else {
                                 onBack()
@@ -266,23 +272,26 @@ fun BookDetailScreen(
                     Button(
                         onClick = {
                             isSaving = true
-                            val updatedBook = book.copy(
+                            val updatedBook = currentBook.copy(
                                 title = editTitle,
                                 author = editAuthor,
                                 description = editDescription,
-                                price = editPrice.toDoubleOrNull() ?: book.price,
+                                price = editPrice.toDoubleOrNull() ?: currentBook.price,
                                 category = editCategory,
                                 imageUrl = editImageBase64
                             )
-                            // Используем extension функцию updateBook
                             db.updateBook(
-                                bookId = book.id,
+                                bookId = currentBook.id,
                                 updatedBook = updatedBook,
-                                oldCategory = book.category,
+                                oldCategory = currentBook.category,
                                 context = context,
                                 onSuccess = {
                                     isSaving = false
                                     isEditing = false
+                                    // Обновляем текущую книгу
+                                    currentBook = updatedBook
+                                    // Уведомляем MainScreen
+                                    onBookUpdated()
                                 },
                                 onFailure = {
                                     isSaving = false
@@ -326,7 +335,7 @@ fun BookDetailScreen(
                         if (bitmap != null) {
                             Image(
                                 bitmap = bitmap.asImageBitmap(),
-                                contentDescription = book.title,
+                                contentDescription = currentBook.title,
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize()
                             )
@@ -350,14 +359,14 @@ fun BookDetailScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = book.title,
+                                text = currentBook.title,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = book.author,
+                                text = currentBook.author,
                                 fontSize = 16.sp,
                                 color = Color.White.copy(alpha = 0.8f)
                             )
@@ -367,7 +376,7 @@ fun BookDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${book.price} ₽",
+                                    text = "${currentBook.price} ₽",
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
@@ -377,7 +386,7 @@ fun BookDetailScreen(
                                     color = Color.White.copy(alpha = 0.2f)
                                 ) {
                                     Text(
-                                        text = book.category,
+                                        text = currentBook.category,
                                         color = Color.White,
                                         fontSize = 12.sp,
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -404,7 +413,7 @@ fun BookDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = book.description,
+                                text = currentBook.description,
                                 fontSize = 14.sp,
                                 color = Color.White.copy(alpha = 0.8f),
                                 lineHeight = 22.sp
@@ -425,7 +434,7 @@ fun BookDetailScreen(
                             )
                         ) {
                             Text(
-                                text = "Купить за ${book.price} ₽",
+                                text = "Купить за ${currentBook.price} ₽",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -463,16 +472,18 @@ fun BookDetailScreen(
                             AlertDialog(
                                 onDismissRequest = { showDeleteDialog = false },
                                 title = { Text("Удалить книгу?") },
-                                text = { Text("Книга \"${book.title}\" будет удалена безвозвратно.") },
+                                text = { Text("Книга \"${currentBook.title}\" будет удалена безвозвратно.") },
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
                                             showDeleteDialog = false
                                             db.deleteBook(
-                                                bookId = book.id,
-                                                bookCategory = book.category,
+                                                bookId = currentBook.id,
+                                                bookCategory = currentBook.category,
                                                 context = context,
-                                                onSuccess = { onBack() }
+                                                onSuccess = {
+                                                    onBack()
+                                                }
                                             )
                                         }
                                     ) {
