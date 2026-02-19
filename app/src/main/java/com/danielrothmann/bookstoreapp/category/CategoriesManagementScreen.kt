@@ -2,7 +2,6 @@ package com.danielrothmann.bookstoreapp.category
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -31,6 +30,7 @@ import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.addCateg
 import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.deleteCategory
 import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.getAllCategories
 import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.updateCategory
+import com.danielrothmann.bookstoreapp.category.CategoryFirestoreHelper.recalculateAllCategoryCounts
 import com.google.firebase.firestore.FirebaseFirestore
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,8 +46,8 @@ fun CategoriesManagementScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingCategory by remember { mutableStateOf<Category?>(null) }
     var showDeleteDialog by remember { mutableStateOf<Category?>(null) }
-
-
+    var showToggleStatusDialog by remember { mutableStateOf<Category?>(null) }
+    var isRecalculating by remember { mutableStateOf(false) }
 
     fun loadCategories() {
         isLoading = true
@@ -65,6 +65,19 @@ fun CategoriesManagementScreen(
     // Загружаем категории
     LaunchedEffect(Unit) {
         loadCategories()
+    }
+
+    fun toggleCategoryStatus(category: Category) {
+        firestore.collection("categories")
+            .document(category.id)
+            .update("isActive", !category.isActive)
+            .addOnSuccessListener {
+                loadCategories()
+                showToggleStatusDialog = null
+            }
+            .addOnFailureListener { exception ->
+                // Показать ошибку
+            }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -107,16 +120,50 @@ fun CategoriesManagementScreen(
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { showAddDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    shape = CircleShape
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Category",
-                        tint = Color.White
-                    )
+                    // Кнопка добавления категории
+                    FloatingActionButton(
+                        onClick = { showAddDialog = true },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Category",
+                            tint = Color.White
+                        )
+                    }
+
+                    // Кнопка для пересчета счетчиков
+                    FloatingActionButton(
+                        onClick = {
+                            isRecalculating = true
+                            firestore.recalculateAllCategoryCounts {
+                                isRecalculating = false
+                                loadCategories()
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        shape = CircleShape,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        if (isRecalculating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Recalculate Counts",
+                                tint = Color.White
+                            )
+                        }
+                    }
                 }
             },
             containerColor = Color.Transparent
@@ -137,12 +184,38 @@ fun CategoriesManagementScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(categories) { category ->
+                    // Активные категории
+                    items(categories.filter { it.isActive }) { category ->
                         CategoryItem(
                             category = category,
                             onEdit = { editingCategory = category },
+                            onToggleStatus = { showToggleStatusDialog = category },
                             onDelete = { showDeleteDialog = category }
                         )
+                    }
+
+                    // Неактивные категории (если есть)
+                    val inactiveCategories = categories.filter { !it.isActive }
+                    if (inactiveCategories.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                text = "Неактивные категории",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        items(inactiveCategories) { category ->
+                            CategoryItem(
+                                category = category,
+                                onEdit = { editingCategory = category },
+                                onToggleStatus = { showToggleStatusDialog = category },
+                                onDelete = { showDeleteDialog = category }
+                            )
+                        }
                     }
 
                     item {
@@ -193,13 +266,13 @@ fun CategoriesManagementScreen(
         )
     }
 
-    // Диалог удаления
+    // Диалог удаления (полное удаление)
     if (showDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Удалить категорию?") },
+            title = { Text("Полностью удалить категорию?") },
             text = {
-                Text("Категория \"${showDeleteDialog!!.name}\" будет удалена. Книги в этой категории останутся, но категория будет недоступна для выбора.")
+                Text("Категория \"${showDeleteDialog!!.name}\" будет полностью удалена из базы данных. Книги в этой категории останутся без категории. Это действие нельзя отменить.")
             },
             confirmButton = {
                 TextButton(
@@ -207,18 +280,60 @@ fun CategoriesManagementScreen(
                         firestore.deleteCategory(
                             categoryId = showDeleteDialog!!.id,
                             context = context,
-                            hardDelete = false // Мягкое удаление
+                            hardDelete = true // Полное удаление
                         ) {
                             loadCategories()
                             showDeleteDialog = null
                         }
                     }
                 ) {
-                    Text("Удалить", color = Color.Red)
+                    Text("Удалить навсегда", color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = null }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
+    // Диалог активации/деактивации
+    if (showToggleStatusDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showToggleStatusDialog = null },
+            title = {
+                Text(
+                    if (showToggleStatusDialog!!.isActive)
+                        "Деактивировать категорию?"
+                    else
+                        "Активировать категорию?"
+                )
+            },
+            text = {
+                if (showToggleStatusDialog!!.isActive) {
+                    Text("Категория \"${showToggleStatusDialog!!.name}\" будет скрыта из списка доступных категорий. Книги в этой категории сохранятся, но новым книгам нельзя будет присвоить эту категорию.")
+                } else {
+                    Text("Категория \"${showToggleStatusDialog!!.name}\" снова станет доступна для выбора при добавлении книг.")
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { toggleCategoryStatus(showToggleStatusDialog!!) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = if (showToggleStatusDialog!!.isActive) Color.Red else Color.Green
+                    )
+                ) {
+                    Text(
+                        if (showToggleStatusDialog!!.isActive)
+                            "Деактивировать"
+                        else
+                            "Активировать"
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showToggleStatusDialog = null }) {
                     Text("Отмена")
                 }
             }
@@ -230,13 +345,17 @@ fun CategoriesManagementScreen(
 fun CategoryItem(
     category: Category,
     onEdit: () -> Unit,
+    onToggleStatus: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.15f)
+            containerColor = if (category.isActive)
+                Color.White.copy(alpha = 0.15f)
+            else
+                Color.Gray.copy(alpha = 0.1f)
         )
     ) {
         Row(
@@ -253,14 +372,17 @@ fun CategoryItem(
                     text = category.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = if (category.isActive) Color.White else Color.White.copy(alpha = 0.5f)
                 )
 
                 if (category.description.isNotBlank()) {
                     Text(
                         text = category.description,
                         fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = if (category.isActive)
+                            Color.White.copy(alpha = 0.7f)
+                        else
+                            Color.White.copy(alpha = 0.3f),
                         maxLines = 2
                     )
                 }
@@ -272,7 +394,10 @@ fun CategoryItem(
                     // Счетчик книг
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color.White.copy(alpha = 0.2f)
+                        color = if (category.isActive)
+                            Color.White.copy(alpha = 0.2f)
+                        else
+                            Color.White.copy(alpha = 0.1f)
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -281,40 +406,65 @@ fun CategoryItem(
                             Icon(
                                 imageVector = Icons.Default.MenuBook,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = if (category.isActive) Color.White else Color.White.copy(alpha = 0.5f),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${category.bookCount} книг",
                                 fontSize = 12.sp,
-                                color = Color.White
+                                color = if (category.isActive) Color.White else Color.White.copy(alpha = 0.5f)
                             )
                         }
                     }
 
                     // Статус
-                    if (!category.isActive) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color.Red.copy(alpha = 0.3f)
-                        ) {
-                            Text(
-                                text = "Неактивна",
-                                fontSize = 12.sp,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (category.isActive)
+                            Color.Green.copy(alpha = 0.3f)
+                        else
+                            Color.Red.copy(alpha = 0.3f)
+                    ) {
+                        Text(
+                            text = if (category.isActive) "Активна" else "Неактивна",
+                            fontSize = 12.sp,
+                            color = if (category.isActive) Color.Green else Color.Red,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
 
-            // Иконки действий с фоном
+            // Иконки действий
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Кнопка редактирования с фоном
+                // Кнопка активации/деактивации
+                Surface(
+                    shape = CircleShape,
+                    color = if (category.isActive)
+                        Color.Red.copy(alpha = 0.3f)
+                    else
+                        Color.Green.copy(alpha = 0.3f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    IconButton(
+                        onClick = onToggleStatus,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (category.isActive)
+                                Icons.Default.VisibilityOff
+                            else
+                                Icons.Default.Visibility,
+                            contentDescription = if (category.isActive) "Deactivate" else "Activate",
+                            tint = if (category.isActive) Color.Red else Color.Green
+                        )
+                    }
+                }
+
+                // Кнопка редактирования
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
@@ -332,7 +482,7 @@ fun CategoryItem(
                     }
                 }
 
-                // Кнопка удаления с фоном
+                // Кнопка полного удаления
                 Surface(
                     shape = CircleShape,
                     color = Color.Red.copy(alpha = 0.3f),
@@ -344,7 +494,7 @@ fun CategoryItem(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = "Delete Permanently",
                             tint = Color.Red
                         )
                     }
@@ -418,9 +568,13 @@ fun CategoryDialog(
                             }
                         },
                         modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
                         enabled = name.isNotBlank()
                     ) {
-                        Text(if (category != null) "Сохранить" else "Добавить")
+                        Text(
+                            text = if (category != null) "Сохранить" else "Добавить",
+                            fontSize = 12.sp,
+                        )
                     }
                 }
             }

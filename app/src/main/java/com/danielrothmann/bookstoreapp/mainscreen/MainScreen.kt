@@ -40,7 +40,7 @@ fun MainScreen(
     onNavigate: (String) -> Unit,
     onSignOut: () -> Unit = {}
 ) {
-    val drawerState = rememberDrawerState(DrawerValue.Open)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val scope = rememberCoroutineScope()

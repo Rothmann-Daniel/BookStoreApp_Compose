@@ -58,8 +58,6 @@ fun BookDetailScreen(
     var categories by remember { mutableStateOf<List<Category>>(emptyList()) }
     var isLoadingCategories by remember { mutableStateOf(true) }
 
-
-
     fun loadCategories() {
         isLoadingCategories = true
         db.collection("categories")
@@ -276,18 +274,20 @@ fun BookDetailScreen(
                                 category = editCategory,
                                 imageUrl = editImageBase64
                             )
-                            db.collection("books")
-                                .document(book.id)
-                                .set(updatedBook)
-                                .addOnSuccessListener {
+                            // Используем extension функцию updateBook
+                            db.updateBook(
+                                bookId = book.id,
+                                updatedBook = updatedBook,
+                                oldCategory = book.category,
+                                context = context,
+                                onSuccess = {
                                     isSaving = false
                                     isEditing = false
-                                    Toast.makeText(context, "Книга обновлена", Toast.LENGTH_SHORT).show()
-                                }
-                                .addOnFailureListener { e ->
+                                },
+                                onFailure = {
                                     isSaving = false
-                                    Toast.makeText(context, "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
+                            )
                         },
                         modifier = Modifier
                             .fillMaxWidth()

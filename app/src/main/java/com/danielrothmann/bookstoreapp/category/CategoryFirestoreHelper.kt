@@ -160,4 +160,40 @@ object CategoryFirestoreHelper {
                 }
             }
     }
+
+    // Полностью пересчитать количество книг во всех категориях
+    fun FirebaseFirestore.recalculateAllCategoryCounts(
+        onComplete: () -> Unit = {}
+    ) {
+        // Сначала получаем все категории
+        this.collection("categories")
+            .get()
+            .addOnSuccessListener { categoryDocuments ->
+
+                // Для каждой категории считаем книги
+                categoryDocuments.forEach { categoryDoc ->
+                    val categoryName = categoryDoc.getString("name") ?: return@forEach
+
+                    this.collection("books")
+                        .whereEqualTo("category", categoryName)
+                        .get()
+                        .addOnSuccessListener { bookDocs ->
+                            val bookCount = bookDocs.size()
+                            categoryDoc.reference.update("bookCount", bookCount)
+                        }
+                }
+                onComplete()
+            }
+    }
+
+    // Обновить счетчики при изменении категории книги
+    fun FirebaseFirestore.updateCategoryCountsOnBookCategoryChange(
+        oldCategory: String,
+        newCategory: String
+    ) {
+        // Уменьшаем счетчик в старой категории
+        this.updateCategoryBookCount(oldCategory, -1)
+        // Увеличиваем счетчик в новой категории
+        this.updateCategoryBookCount(newCategory, 1)
+    }
 }
