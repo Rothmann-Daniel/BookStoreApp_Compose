@@ -4,8 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.navigation.compose.rememberNavController
-import com.danielrothmann.bookstoreapp.navigation.NavGraph
 import com.danielrothmann.bookstoreapp.ui.theme.BookStoreAppTheme
 
 
@@ -16,10 +14,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BookStoreAppTheme {
-                val navController = rememberNavController()
-                NavGraph(
-                    navController = navController,
-                )
+              BookStoreApp()
             }
         }
     }

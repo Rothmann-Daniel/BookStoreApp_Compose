@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -74,6 +75,9 @@ dependencies {
     implementation(libs.database.roomKtx)
     kapt(libs.database.roomCompiler)
 
+    // Koin
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 
     // Testing
     testImplementation(libs.junit)
