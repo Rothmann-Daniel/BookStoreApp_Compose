@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.gms)
     alias(libs.plugins.plugin.serialization)
+    id("kotlin-kapt")
 }
 
 android {
@@ -67,6 +68,11 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.common.ktx)
     implementation(libs.firebase.storage)
+
+    // Room
+    implementation(libs.database.roomRuntime)
+    implementation(libs.database.roomKtx)
+    kapt(libs.database.roomCompiler)
 
 
     // Testing

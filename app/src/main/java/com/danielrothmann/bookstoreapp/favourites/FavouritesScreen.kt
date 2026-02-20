@@ -1,4 +1,4 @@
-package com.danielrothmann.bookstoreapp.favorites
+package com.danielrothmann.bookstoreapp.favourites
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

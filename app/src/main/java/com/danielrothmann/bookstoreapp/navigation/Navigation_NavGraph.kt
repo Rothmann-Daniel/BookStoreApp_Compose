@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,7 +12,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.danielrothmann.bookstoreapp.auth.LoginScreen
 import com.danielrothmann.bookstoreapp.book.AddBookScreen
 import com.danielrothmann.bookstoreapp.category.CategoriesManagementScreen
-import com.danielrothmann.bookstoreapp.favorites.FavoritesScreen
+import com.danielrothmann.bookstoreapp.favourites.FavoritesScreen
 import com.danielrothmann.bookstoreapp.mainscreen.MainScreen
 import com.danielrothmann.bookstoreapp.profile.ProfileScreen
 import com.google.firebase.auth.FirebaseAuth
