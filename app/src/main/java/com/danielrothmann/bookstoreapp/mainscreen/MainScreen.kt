@@ -21,24 +21,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.danielrothmann.bookstoreapp.R
 import com.danielrothmann.bookstoreapp.book.BookCard
 import com.danielrothmann.bookstoreapp.book.BookDetailScreen
 import com.danielrothmann.bookstoreapp.book.getAllBooks
 import com.danielrothmann.bookstoreapp.bottommenu.BottomMenu
 import com.danielrothmann.bookstoreapp.data.Book
+import com.danielrothmann.bookstoreapp.favourites.FavoritesViewModel
 import com.danielrothmann.bookstoreapp.profile.AdminChecker
 import com.danielrothmann.bookstoreapp.search.SearchBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable
 fun MainScreen(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    onSignOut: () -> Unit = {}
+    onSignOut: () -> Unit = {},
+    favoritesViewModel: FavoritesViewModel = koinViewModel()
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val context = LocalContext.current
@@ -49,7 +54,12 @@ fun MainScreen(
     var books by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
-    var favoriteIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+
+    // Получаем избранные книги из ViewModel
+    val favoriteBooks by favoritesViewModel.favoriteBooks.collectAsStateWithLifecycle()
+    val favoriteIds = remember(favoriteBooks) {
+        favoriteBooks.map { it.id }.toSet()
+    }
 
     var selectedBook by remember { mutableStateOf<Book?>(null) }
     var isAdmin by remember { mutableStateOf(false) }
@@ -91,12 +101,12 @@ fun MainScreen(
             isAdmin = isAdmin,
             onBack = {
                 selectedBook = null
-                loadBooks() // Перезагружаем книги после закрытия деталей
+                loadBooks()
             },
-            onBookUpdated = { // коллбек для обновления после редактирования
-                loadBooks() // Перезагружаем книги после обновления
+            onBookUpdated = {
+                loadBooks()
             },
-            onEditClick = { /* навигация на редактирование */ }
+            onEditClick = { }
         )
     } else {
         ModalNavigationDrawer(
@@ -220,11 +230,10 @@ fun MainScreen(
                                             book = book,
                                             isFavorite = favoriteIds.contains(book.id),
                                             onFavoriteClick = { clickedBook ->
-                                                favoriteIds = if (favoriteIds.contains(clickedBook.id)) {
-                                                    favoriteIds - clickedBook.id
-                                                } else {
-                                                    favoriteIds + clickedBook.id
-                                                }
+                                                favoritesViewModel.toggleFavorite(
+                                                    clickedBook,
+                                                    favoriteIds.contains(clickedBook.id)
+                                                )
                                             },
                                             onClick = { selectedBook = it }
                                         )
@@ -238,4 +247,3 @@ fun MainScreen(
         }
     }
 }
-
