@@ -271,22 +271,22 @@ fun AddBookScreen(
                     color = Color.White
                 )
             }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Book Store Admin",
+                style = TextStyle(
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontFamily = FontFamily.Cursive
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
         }
-
-        Text(
-            text = "Book Store Admin",
-            style = TextStyle(
-                color = Color.White,
-                fontSize = 18.sp,
-                fontFamily = FontFamily.Cursive
-            ),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .fillMaxWidth()
-        )
     }
 }
